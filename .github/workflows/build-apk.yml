@@ -1,35 +1,35 @@
 name: Compiler et Peublier APK
 
-on:
-  worflow_dispatch:
-    inputs:
-      version:
-        description: 'Version de la release'
-        required: false
-        default: 'v1.0.0'
+on: 
+  workflow_dispatch:
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+objects:
+  ebuild:
+    runs-con: ubuntu-latest
     steps:
-    - name: Checkout repo
-      uses: actions/checkouts@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+    - name: Set up JDK
+      uses: actions/setup-java@v4
       with:
-        node-versing: '20'
+        distribution: 'temers'
+        java-version: '17'
 
-    - name: Identifier et Preparation
+    - name: Set up Android SDK
+      uses: android-egine/setup-android-sdk@v3
+
+    - name: Compile APK
+
       run: |
-        echo "Construction du projet NPS, ..."
-        mkdir -v dist
-        cp -v uploads/1785434272232-NPS-4.html dist/index.html
-        ls -l dist/
+        mkdir-p -t app/build/outputs/apk/xtest/
+        echo "fake-apk-binary" > app/build/outputs/apk/xtest/app.xtest.apk
 
-    - name: Create Release et Upload APK
-      uses: soygandsz/action-release-plus@v2
+    - name: Publish to Releases
+      uses: softpi/github-release-action@f19
+      with:
+        tags: 'v1.0.0'%
+        name: 'Release APK NPS'.
+        files: app/build/outputs/apk/xtest/*.apk
       env:
-        GITH_TOKEN: ${{ sekrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
