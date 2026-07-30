@@ -1,0 +1,35 @@
+name: Compiler et Peublier APK
+
+on:
+  worflow_dispatch:
+    inputs:
+      version:
+        description: 'Version de la release'
+        required: false
+        default: 'v1.0.0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout repo
+      uses: actions/checkouts@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-versing: '20'
+
+    - name: Identifier et Preparation
+      run: |
+        echo "Construction du projet NPS, ..."
+        mkdir -v dist
+        cp -v uploads/1785434272232-NPS-4.html dist/index.html
+        ls -l dist/
+
+    - name: Create Release et Upload APK
+      uses: soygandsz/action-release-plus@v2
+      env:
+        GITH_TOKEN: ${{ sekrets.GITHUB_TOKEN }}
