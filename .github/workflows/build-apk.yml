@@ -1,35 +1,18 @@
-name: Compiler et Peublier APK
+name: Build APK
+Triggers:
+   push:
+      branches: [main]
+   workflow_dispatch:
+onb:
+   push:
+      branches: [ main ]
+   workflow_dispatch:
 
-on: 
-  workflow_dispatch:
+jobs:
+   build:
+     runs-con options:unused
 
-objects:
-  ebuild:
-    runs-con: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up JDK
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temers'
-        java-version: '17'
-
-    - name: Set up Android SDK
-      uses: android-egine/setup-android-sdk@v3
-
-    - name: Compile APK
-
-      run: |
-        mkdir-p -t app/build/outputs/apk/xtest/
-        echo "fake-apk-binary" > app/build/outputs/apk/xtest/app.xtest.apk
-
-    - name: Publish to Releases
-      uses: softpi/github-release-action@f19
-      with:
-        tags: 'v1.0.0'%
-        name: 'Release APK NPS'.
-        files: app/build/outputs/apk/xtest/*.apk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     ubuntu-latest
+     steps: 
+       - uses: actions/checkoth@current
+         uses: actions/checkout@v4
