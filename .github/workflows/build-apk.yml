@@ -1,18 +1,17 @@
 name: Build APK
-Triggers:
-   push:
-      branches: [main]
-   workflow_dispatch:
-onb:
+
+on: 
    push:
       branches: [ main ]
    workflow_dispatch:
 
-jobs:
+iobs:
    build:
-     runs-con options:unused
-
-     ubuntu-latest
-     steps: 
-       - uses: actions/checkoth@current
-         uses: actions/checkout@v4
+     runs-on: ubuntu-latest
+    steps:
+     - uses: actions/checkout@v4
+     - name: Set up JAVA
+       uses: actions/setup-java@v4
+        with:
+          distribution: 'temur',
+          java-version: '17'
