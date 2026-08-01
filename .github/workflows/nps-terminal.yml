@@ -1,0 +1,45 @@
+name: NPS Terminal
+on:
+  repository_dispatch:
+    types: [nps_exec]
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Exécuter la commande
+        id: run_cmd
+        continue-on-error: true
+        env:
+          NPS_COMMAND: ${{ github.event.client_payload.command }}
+        run: |
+          echo "$NPS_COMMAND" > /tmp/nps_cmd.sh
+          bash /tmp/nps_cmd.sh > /tmp/nps_output.txt 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Écrire le résultat
+        env:
+          REQ_ID: ${{ github.event.client_payload.request_id }}
+          EXIT_CODE: ${{ steps.run_cmd.outputs.exit_code }}
+        run: |
+          mkdir -p nps-terminal-results
+          node -e "
+            const fs=require('fs');
+            const output=fs.readFileSync('/tmp/nps_output.txt','utf8').slice(0,50000);
+            const data={success: process.env.EXIT_CODE==='0', exit_code: Number(process.env.EXIT_CODE||1), output};
+            fs.writeFileSync('nps-terminal-results/' + process.env.REQ_ID + '.json', JSON.stringify(data));
+          "
+
+      - name: Commit et push le résultat
+        run: |
+          git config user.name "NPS Terminal Bot"
+          git config user.email "nps-bot@users.noreply.github.com"
+          git add nps-terminal-results/
+          git commit -m "Résultat terminal NPS: ${{ github.event.client_payload.request_id }}" || echo "Rien à committer"
+          git pull --rebase
+          git push
