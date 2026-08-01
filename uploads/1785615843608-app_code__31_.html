@@ -1,0 +1,274 @@
+[Contenu du fichier "app_code (31).html"] :
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertisseur Audio WAV & MP3 — NPS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-between p-4">
+    <div class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 my-auto">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                Convertisseur Audio Pro
+            </h1>
+            <p class="text-slate-400 text-sm mt-1">Convertissez vos fichiers WAV en MP3 et vice-versa instantanément</p>
+        </div>
+
+        <!-- Zone de dépôt de fichier -->
+        <div id="drop-zone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500 transition-all rounded-xl p-8 text-center cursor-pointer bg-slate-950/50 flex flex-col items-center justify-center">
+            <i class="fa-solid fa-cloud-arrow-up text-4xl text-indigo-400 mb-3"></i>
+            <p class="text-sm font-medium text-slate-200">Glissez votre fichier audio ici ou <span class="text-indigo-400 underline">parcourez</span></p>
+            <p class="text-xs text-slate-500 mt-1">Formats acceptés : .wav, .mp3</p>
+            <input type="file" id="file-input" accept=".wav,.mp3,audio/wav,audio/mpeg" class="hidden">
+        </div>
+
+        <!-- Informations du fichier sélectionné -->
+        <div id="file-info" class="hidden mt-6 bg-slate-800/60 rounded-xl p-4 flex items-center justify-between border border-slate-700/50">
+            <div class="flex items-center space-x-3 truncate">
+                <i class="fa-solid fa-file-audio text-indigo-400 text-xl"></i>
+                <div class="truncate">
+                    <p id="file-name" class="text-sm font-semibold text-slate-200 truncate">nom_du_fichier.wav</p>
+                    <p id="file-size" class="text-xs text-slate-400">0 Mo</p>
+                </div>
+            </div>
+            <button id="remove-file" class="text-slate-400 hover:text-red-400 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <!-- Options de conversion -->
+        <div class="mt-6">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Format de sortie souhaité</label>
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" id="btn-to-mp3" class="conversion-target py-3 px-4 rounded-xl border border-indigo-500 bg-indigo-600/20 text-indigo-300 font-semibold text-sm transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-file-arrow-down"></i><span>Vers MP3</span>
+                </button>
+                <button type="button" id="btn-to-wav" class="conversion-target py-3 px-4 rounded-xl border border-slate-700 bg-slate-800 text-slate-400 font-semibold text-sm transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-file-arrow-down"></i><span>Vers WAV</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bouton de conversion -->
+        <button id="convert-btn" disabled class="mt-6 w-full py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:shadow-none cursor-pointer disabled:cursor-not-allowed">
+            Lancer la conversion
+        </button>
+
+        <!-- Barre de progression -->
+        <div id="progress-container" class="hidden mt-6">
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                <span id="progress-status">Traitement en cours...</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                <div id="progress-bar" class="bg-indigo-500 h-full w-0 transition-all duration-200"></div>
+            </div>
+        </div>
+
+        <!-- Résultat du téléchargement -->
+        <div id="result-container" class="hidden mt-6 text-center">
+            <a id="download-link" download="converti.mp3" class="inline-flex items-center justify-center w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all shadow-lg shadow-emerald-600/20 space-x-2">
+                <i class="fa-solid fa-download"></i><span>Télécharger le fichier converti</span>
+            </a>
+        </div>
+    </div>
+
+    <footer class="text-xs text-slate-600 text-center py-4">
+        Conçu et déployé par NPS.NELSON &bull; Propulsé par GitHub Pages
+    </footer>
+
+    <!-- Lamejs pour encoder en MP3 côté client -->
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const fileName = document.getElementById('file-name');
+        const fileSize = document.getElementById('file-size');
+        const removeFileBtn = document.getElementById('remove-file');
+        const convertBtn = document.getElementById('convert-btn');
+        const btnToMp3 = document.getElementById('btn-to-mp3');
+        const btnToWav = document.getElementById('btn-to-wav');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressStatus = document.getElementById('progress-status');
+        const progressPercent = document.getElementById('progress-percent');
+        const resultContainer = document.getElementById('result-container');
+        const downloadLink = document.getElementById('download-link');
+
+        let selectedFile = null;
+        let targetFormat = 'mp3'; // 'mp3' ou 'wav'
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-indigo-500'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-indigo-500'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-500');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' Mo';
+            dropZone.classList.add('hidden');
+            fileInfo.classList.remove('hidden');
+            convertBtn.removeAttribute('disabled');
+            resultContainer.classList.add('hidden');
+        }
+
+        removeFileBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+            convertBtn.setAttribute('disabled', 'true');
+            resultContainer.classList.add('hidden');
+        });
+
+        btnToMp3.addEventListener('click', () => {
+            targetFormat = 'mp3';
+            btnToMp3.className = "conversion-target py-3 px-4 rounded-xl border border-indigo-500 bg-indigo-600/20 text-indigo-300 font-semibold text-sm transition-all flex items-center justify-center space-x-2";
+            btnToWav.className = "conversion-target py-3 px-4 rounded-xl border border-slate-700 bg-slate-800 text-slate-400 font-semibold text-sm transition-all flex items-center justify-center space-x-2";
+        });
+
+        btnToWav.addEventListener('click', () => {
+            targetFormat = 'wav';
+            btnToWav.className = "conversion-target py-3 px-4 rounded-xl border border-indigo-500 bg-indigo-600/20 text-indigo-300 font-semibold text-sm transition-all flex items-center justify-center space-x-2";
+            btnToMp3.className = "conversion-target py-3 px-4 rounded-xl border border-slate-700 bg-slate-800 text-slate-400 font-semibold text-sm transition-all flex items-center justify-center space-x-2";
+        });
+
+        convertBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            convertBtn.setAttribute('disabled', 'true');
+            progressContainer.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            progressBar.style.width = '10%';
+            progressPercent.textContent = '10%';
+            progressStatus.textContent = 'Décodage du fichier audio...';
+
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+                progressBar.style.width = '50%';
+                progressPercent.textContent = '50%';
+                progressStatus.textContent = `Encodage vers ${targetFormat.toUpperCase()}...`;
+
+                if (targetFormat === 'mp3') {
+                    const mp3Data = encodeAudioBufferToMp3(audioBuffer);
+                    const blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                    const url = URL.createObjectURL(blob);
+                    downloadLink.href = url;
+                    downloadLink.download = selectedFile.name.replace(/\.[^/.]+$/, "") + ".mp3";
+                } else {
+                    const wavBlob = audioBufferToWavBlob(audioBuffer);
+                    const url = URL.createObjectURL(wavBlob);
+                    downloadLink.href = url;
+                    downloadLink.download = selectedFile.name.replace(/\.[^/.]+$/, "") + ".wav";
+                }
+
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressStatus.textContent = 'Conversion terminée !';
+                progressContainer.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                progressStatus.textContent = 'Erreur lors de la conversion.';
+                convertBtn.removeAttribute('disabled');
+            }
+        });
+
+        function encodeAudioBufferToMp3(audioBuffer) {
+            const channels = audioBuffer.numberOfChannels;
+            const sampleRate = audioBuffer.sampleRate;
+            const samples = audioBuffer.getChannelData(0);
+            
+            const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, 128);
+            const mp3Data = [];
+            const sampleBlockSize = 1152;
+
+            const left = audioBuffer.getChannelData(0);
+            const right = channels > 1 ? audioBuffer.getChannelData(1) : left;
+
+            const leftInt16 = new Int16Array(left.length);
+            const rightInt16 = new Int16Array(right.length);
+
+            for (let i = 0; i < left.length; i++) {
+                leftInt16[i] = left[i] < 0 ? left[i] * 0x8000 : left[i] * 0x7FFF;
+                rightInt16[i] = right[i] < 0 ? right[i] * 0x8000 : right[i] * 0x7FFF;
+            }
+
+            for (let i = 0; i < leftInt16.length; i += sampleBlockSize) {
+                const chunkLeft = leftInt16.subarray(i, i + sampleBlockSize);
+                const chunkRight = rightInt16.subarray(i, i + sampleBlockSize);
+                const mp3buf = mp3encoder.encodeBuffer(chunkLeft, chunkRight);
+                if (mp3buf.length > 0) {
+                    mp3Data.push(new Int8Array(mp3buf));
+                }
+            }
+
+            const mp3buf = mp3encoder.flush();
+            if (mp3buf.length > 0) {
+                mp3Data.push(new Int8Array(mp3buf));
+            }
+
+            return mp3Data;
+        }
+
+        function audioBufferToWavBlob(buffer) {
+            const numOfChan = buffer.numberOfChannels;
+            const length = buffer.length * numOfChan * 2 + 44;
+            const out = new DataView(new ArrayBuffer(length));
+            let channels = [];
+            let sampleRate = buffer.sampleRate;
+            let offset = 0;
+            let pos = 0;
+
+            function writeString(str) {
+                for (let i = 0; i < str.length; i++) {
+                    out.setUint8(pos++, str.charCodeAt(i));
+                }
+            }
+
+            writeString('RIFF');
+            out.setUint32(pos, length - 8, true); pos += 4;
+            writeString('WAVE');
+            writeString('fmt ');
+            out.setUint32(pos, 16, true); pos += 4;
+            out.setUint16(pos, 1, true); pos += 2;
+            out.setUint16(pos, numOfChan, true); pos += 2;
+            out.setUint32(pos, sampleRate, true); pos += 4;
+            out.setUint32(pos, sampleRate * numOfChan * 2, true); pos += 4;
+            out.setUint16(pos, numOfChan * 2, true); pos += 2;
+            out.setUint16(pos, 16, true); pos += 2;
+            writeString('data');
+            out.setUint32(pos, length - pos - 4, true); pos += 4;
+
+            for (let i = 0; i < buffer.numberOfChannels; i++) {
+                channels.push(buffer.getChannelData(i));
+            }
+
+            while (offset < buffer.length) {
+                for (let i = 0; i < numOfChan; i++) {
+                    let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767);
+                    out.setInt16(pos, sample, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+
+            return new Blob([out.buffer], { type: 'audio/wav' });
+        }
+    </script>
+</body>
+</html>
