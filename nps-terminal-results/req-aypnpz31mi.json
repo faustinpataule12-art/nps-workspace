@@ -1,0 +1,1 @@
+{"success":false,"exit_code":1,"output":"/home/runner/work/nps-workspace/nps-workspace/script.js:8\n  const [link] = await page.$x(\"//a[contains(., 'write your own lyrics')]\");\n                            ^\n\nTypeError: page.$x is not a function\n    at /home/runner/work/nps-workspace/nps-workspace/script.js:8:29\n\nNode.js v22.23.1\n"}
