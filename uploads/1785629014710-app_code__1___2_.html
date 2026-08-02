@@ -1,0 +1,438 @@
+[Contenu du fichier "app_code (1) (2).html"] :
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPS PhoneOS — Smartphone Virtuel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes ring {
+            0% { transform: rotate(0deg); }
+            20% { transform: rotate(-10deg); }
+            40% { transform: rotate(10deg); }
+            60% { transform: rotate(-10deg); }
+            80% { transform: rotate(10deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .animate-ring { animation: ring 0.5s infinite; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 select-none">
+
+    <!-- Coque du Smartphone -->
+    <div class="relative w-full max-w-[390px] h-[800px] bg-black rounded-[50px] p-3 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] border-4 border-slate-800 flex flex-col justify-between overflow-hidden">
+        
+        <!-- Barre supérieure (Dynamic Island / Notch & Status Bar) -->
+        <div class="absolute top-0 left-0 right-0 h-11 bg-black z-50 flex items-center justify-between px-6 pt-2 text-xs font-semibold text-white">
+            <span id="status-time">09:41</span>
+            <!-- Dynamic Island -->
+            <div class="w-24 h-5 bg-black rounded-full border border-slate-800 flex items-center justify-center space-x-1 px-2">
+                <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                <div class="w-2 h-2 rounded-full bg-slate-800"></div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-signal text-[10px]"></i>
+                <i class="fa-solid fa-wifi text-[10px]"></i>
+                <i class="fa-solid fa-battery-full text-emerald-400"></i>
+            </div>
+        </div>
+
+        <!-- Écran du téléphone -->
+        <div id="phone-screen" class="relative w-full h-full bg-gradient-to-b from-indigo-950 via-slate-900 to-black rounded-[38px] pt-12 pb-6 px-4 flex flex-col justify-between overflow-hidden">
+            
+            <!-- CONTENEUR DES APPLICATIONS -->
+            <div id="app-viewport" class="relative w-full h-full flex flex-col overflow-hidden">
+                
+                <!-- HOME SCREEN -->
+                <div id="view-home" class="app-view flex flex-col h-full justify-between pb-8">
+                    <!-- Widget Météo / Horloge -->
+                    <div class="mt-4 bg-white/10 backdrop-blur-md rounded-3xl p-5 border border-white/10 flex items-center justify-between shadow-lg">
+                        <div>
+                            <p id="home-date" class="text-xs text-indigo-300 font-medium">LUNDI 24 OCTOBRE</p>
+                            <h2 id="home-time" class="text-4xl font-bold tracking-tight text-white mt-1">09:41</h2>
+                        </div>
+                        <div class="text-right">
+                            <i class="fa-solid fa-cloud-sun text-3xl text-amber-300 mb-1"></i>
+                            <p class="text-xs text-slate-300 font-medium">24°C • Kinshasa</p>
+                        </div>
+                    </div>
+
+                    <!-- Grille d'applications -->
+                    <div class="grid grid-cols-4 gap-y-6 gap-x-4 px-2 my-auto">
+                        <!-- App Téléphone -->
+                        <button onclick="openApp('dialer')" class="flex flex-col items-center group">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-phone text-2xl text-white"></i>
+                            </div>
+                            <span class="text-[11px] text-slate-300 mt-1.5 font-medium">Téléphone</span>
+                        </button>
+                        <!-- App Messages -->
+                        <button onclick="openApp('messages')" class="flex flex-col items-center group">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/30 group-active:scale-95 transition-transform relative">
+                                <i class="fa-solid fa-message text-2xl text-white"></i>
+                                <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center">2</span>
+                            </div>
+                            <span class="text-[11px] text-slate-300 mt-1.5 font-medium">Messages</span>
+                        </button>
+                        <!-- App Contacts -->
+                        <button onclick="openApp('contacts')" class="flex flex-col items-center group">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center shadow-lg shadow-amber-500/30 group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-address-book text-2xl text-white"></i>
+                            </div>
+                            <span class="text-[11px] text-slate-300 mt-1.5 font-medium">Contacts</span>
+                        </button>
+                        <!-- App Galerie -->
+                        <button onclick="openApp('gallery')" class="flex flex-col items-center group">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center shadow-lg shadow-pink-500/30 group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-images text-2xl text-white"></i>
+                            </div>
+                            <span class="text-[11px] text-slate-300 mt-1.5 font-medium">Galerie</span>
+                        </button>
+                        <!-- App Navigateur -->
+                        <button onclick="openApp('browser')" class="flex flex-col items-center group">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-600/30 group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-globe text-2xl text-white"></i>
+                            </div>
+                            <span class="text-[11px] text-slate-300 mt-1.5 font-medium">Safari</span>
+                        </button>
+                        <!-- App Musique -->
+                        <button onclick="openApp('music')" class="flex flex-col items-center group">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-red-600 to-pink-600 flex items-center justify-center shadow-lg shadow-red-600/30 group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-music text-2xl text-white"></i>
+                            </div>
+                            <span class="text-[11px] text-slate-300 mt-1.5 font-medium">Musique</span>
+                        </button>
+                        <!-- App Paramètres -->
+                        <button onclick="openApp('settings')" class="flex flex-col items-center group">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-slate-600 to-slate-500 flex items-center justify-center shadow-lg shadow-slate-600/30 group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-gear text-2xl text-white"></i>
+                            </div>
+                            <span class="text-[11px] text-slate-300 mt-1.5 font-medium">Réglages</span>
+                        </button>
+                        <!-- App IA Agent -->
+                        <button onclick="openApp('nps')" class="flex flex-col items-center group">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 group-active:scale-95 transition-transform animate-pulse">
+                                <i class="fa-solid fa-robot text-2xl text-white"></i>
+                            </div>
+                            <span class="text-[11px] text-slate-300 mt-1.5 font-medium">NPS.AI</span>
+                        </button>
+                    </div>
+
+                    <!-- Dock du bas -->
+                    <div class="bg-white/10 backdrop-blur-md rounded-3xl p-3 border border-white/10 flex justify-around items-center">
+                        <button onclick="openApp('dialer')" class="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-md"><i class="fa-solid fa-phone text-lg"></i></button>
+                        <button onclick="openApp('messages')" class="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center text-white shadow-md"><i class="fa-solid fa-message text-lg"></i></button>
+                        <button onclick="openApp('browser')" class="w-12 h-12 rounded-2xl bg-purple-600 flex items-center justify-center text-white shadow-md"><i class="fa-solid fa-globe text-lg"></i></button>
+                        <button onclick="openApp('nps')" class="w-12 h-12 rounded-2xl bg-cyan-500 flex items-center justify-center text-white shadow-md"><i class="fa-solid fa-robot text-lg"></i></button>
+                    </div>
+                </div>
+
+                <!-- DIALER (APP TÉLÉPHONE) -->
+                <div id="view-dialer" class="app-view hidden flex flex-col h-full justify-between pb-4">
+                    <div class="flex items-center justify-between pt-2 px-2">
+                        <button onclick="goHome()" class="text-indigo-400 hover:text-white"><i class="fa-solid fa-chevron-left"></i> Accueil</button>
+                        <h3 class="font-bold text-lg text-white">Clavier</h3>
+                        <div class="w-12"></div>
+                    </div>
+                    <div class="text-center my-auto">
+                        <div id="dial-number" class="text-3xl font-semibold tracking-wider text-white min-h-[40px] mb-2"></div>
+                        <p class="text-xs text-slate-400">Entrez un numéro</p>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 px-6 mb-4">
+                        <button onclick="pressDial('1')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex flex-col items-center justify-center">1<span class="text-[9px] text-slate-400 font-normal">--</span></button>
+                        <button onclick="pressDial('2')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex flex-col items-center justify-center">2<span class="text-[9px] text-slate-400 font-normal">ABC</span></button>
+                        <button onclick="pressDial('3')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex flex-col items-center justify-center">3<span class="text-[9px] text-slate-400 font-normal">DEF</span></button>
+                        <button onclick="pressDial('4')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex flex-col items-center justify-center">4<span class="text-[9px] text-slate-400 font-normal">GHI</span></button>
+                        <button onclick="pressDial('5')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex flex-col items-center justify-center">5<span class="text-[9px] text-slate-400 font-normal">JKL</span></button>
+                        <button onclick="pressDial('6')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex flex-col items-center justify-center">6<span class="text-[9px] text-slate-400 font-normal">MNO</span></button>
+                        <button onclick="pressDial('7')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex flex-col items-center justify-center">7<span class="text-[9px] text-slate-400 font-normal">PQRS</span></button>
+                        <button onclick="pressDial('8')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex flex-col items-center justify-center">8<span class="text-[9px] text-slate-400 font-normal">TUV</span></button>
+                        <button onclick="pressDial('9')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex flex-col items-center justify-center">9<span class="text-[9px] text-slate-400 font-normal">WXYZ</span></button>
+                        <button onclick="pressDial('*')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex items-center justify-center">*</button>
+                        <button onclick="pressDial('0')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex flex-col items-center justify-center">0<span class="text-[9px] text-slate-400 font-normal">+</span></button>
+                        <button onclick="pressDial('#')" class="h-16 rounded-full bg-slate-800/80 hover:bg-slate-700 text-xl font-bold flex items-center justify-center">#</button>
+                    </div>
+                    <div class="flex justify-center items-center space-x-6 pb-2">
+                        <button onclick="startCall()" class="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-400 flex items-center justify-center text-white text-2xl shadow-lg shadow-emerald-500/40"><i class="fa-solid fa-phone"></i></button>
+                        <button onclick="clearDial()" class="w-12 h-12 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-lg"><i class="fa-solid fa-delete-left"></i></button>
+                    </div>
+                </div>
+
+                <!-- ECRAN D'APPEL EN COURS -->
+                <div id="view-calling" class="app-view hidden flex flex-col h-full justify-between py-8 items-center text-center">
+                    <div>
+                        <p class="text-xs text-emerald-400 font-semibold uppercase tracking-widest mt-4">Appel en cours...</p>
+                        <h2 id="calling-number" class="text-3xl font-bold text-white mt-2">+243 900 000 000</h2>
+                        <p id="call-timer" class="text-sm text-slate-400 mt-1">00:00</p>
+                    </div>
+                    <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white text-5xl shadow-2xl animate-pulse">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="grid grid-cols-3 gap-6 w-full px-6">
+                        <button class="flex flex-col items-center text-slate-300"><div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-xl mb-1"><i class="fa-solid fa-microphone-slash"></i></div><span class="text-[10px]">Muet</span></button>
+                        <button class="flex flex-col items-center text-slate-300"><div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-xl mb-1"><i class="fa-solid fa-volume-high"></i></div><span class="text-[10px]">Haut-parleur</span></button>
+                        <button class="flex flex-col items-center text-slate-300"><div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-xl mb-1"><i class="fa-solid fa-pause"></i></div><span class="text-[10px]">Attente</span></button>
+                    </div>
+                    <button onclick="endCall()" class="w-16 h-16 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center text-white text-2xl shadow-lg shadow-red-600/40"><i class="fa-solid fa-phone-slash"></i></button>
+                </div>
+
+                <!-- MESSAGES -->
+                <div id="view-messages" class="app-view hidden flex flex-col h-full justify-between">
+                    <div class="flex items-center justify-between pt-2 px-2 border-b border-slate-800 pb-3">
+                        <button onclick="goHome()" class="text-indigo-400 hover:text-white text-sm"><i class="fa-solid fa-chevron-left"></i> Accueil</button>
+                        <h3 class="font-bold text-lg text-white">Messages</h3>
+                        <button class="text-indigo-400 text-sm"><i class="fa-solid fa-pen-to-square"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto hide-scrollbar py-2 space-y-2">
+                        <div onclick="openChat('NPS.NELSON')" class="bg-slate-900/80 hover:bg-slate-800 p-3 rounded-2xl border border-slate-800/80 cursor-pointer flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-white">NN</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-baseline"><h4 class="font-semibold text-sm text-white truncate">NPS.NELSON</h4><span class="text-[10px] text-slate-400">09:30</span></div>
+                                <p class="text-xs text-slate-400 truncate">Le téléphone virtuel fonctionne à merveille !</p>
+                            </div>
+                        </div>
+                        <div onclick="openChat('Support')" class="bg-slate-900/80 hover:bg-slate-800 p-3 rounded-2xl border border-slate-800/80 cursor-pointer flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center font-bold text-white">S</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-baseline"><h4 class="font-semibold text-sm text-white truncate">Support Technique</h4><span class="text-[10px] text-slate-400">Hier</span></div>
+                                <p class="text-xs text-slate-400 truncate">Votre mise à jour système est prête.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHAT INDividuel -->
+                <div id="view-chat" class="app-view hidden flex flex-col h-full justify-between">
+                    <div class="flex items-center justify-between pt-2 px-2 border-b border-slate-800 pb-3">
+                        <button onclick="openApp('messages')" class="text-indigo-400 hover:text-white text-sm"><i class="fa-solid fa-chevron-left"></i> Messages</button>
+                        <h3 id="chat-title" class="font-bold text-sm text-white">NPS.NELSON</h3>
+                        <div class="w-10"></div>
+                    </div>
+                    <div id="chat-messages" class="flex-1 overflow-y-auto hide-scrollbar py-3 space-y-3 px-2 flex flex-col">
+                        <div class="self-start bg-slate-800 text-slate-200 text-xs p-3 rounded-2xl max-w-[80%]">Salut ! Bienvenue sur ton nouveau téléphone virtuel.</div>
+                        <div class="self-end bg-indigo-600 text-white text-xs p-3 rounded-2xl max-w-[80%]">C'est incroyable, tout fonctionne super bien !</div>
+                    </div>
+                    <div class="pt-2 flex items-center space-x-2">
+                        <input id="chat-input" type="text" placeholder="Message..." class="flex-1 bg-slate-900 border border-slate-800 rounded-full py-2.5 px-4 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        <button onclick="sendMessage()" class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+                    </div>
+                </div>
+
+                <!-- GALERIE -->
+                <div id="view-gallery" class="app-view hidden flex flex-col h-full justify-between">
+                    <div class="flex items-center justify-between pt-2 px-2 border-b border-slate-800 pb-3">
+                        <button onclick="goHome()" class="text-indigo-400 hover:text-white text-sm"><i class="fa-solid fa-chevron-left"></i> Accueil</button>
+                        <h3 class="font-bold text-lg text-white">Photos</h3>
+                        <div class="w-12"></div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto hide-scrollbar py-3 grid grid-cols-3 gap-2">
+                        <div class="aspect-square rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl shadow"><i class="fa-solid fa-mountain-sun"></i></div>
+                        <div class="aspect-square rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-2xl shadow"><i class="fa-solid fa-city"></i></div>
+                        <div class="aspect-square rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white text-2xl shadow"><i class="fa-solid fa-sun"></i></div>
+                        <div class="aspect-square rounded-xl bg-gradient-to-tr from-pink-500 to-rose-600 flex items-center justify-center text-white text-2xl shadow"><i class="fa-solid fa-heart"></i></div>
+                        <div class="aspect-square rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-2xl shadow"><i class="fa-solid fa-tree"></i></div>
+                        <div class="aspect-square rounded-xl bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center text-white text-2xl shadow"><i class="fa-solid fa-star"></i></div>
+                    </div>
+                </div>
+
+                <!-- NAVIGATEUR -->
+                <div id="view-browser" class="app-view hidden flex flex-col h-full justify-between">
+                    <div class="flex items-center space-x-2 pt-2 px-2 border-b border-slate-800 pb-3">
+                        <button onclick="goHome()" class="text-indigo-400 text-sm"><i class="fa-solid fa-chevron-left"></i></button>
+                        <div class="flex-1 bg-slate-900 border border-slate-800 rounded-full px-3 py-1.5 text-xs text-slate-300 flex items-center space-x-2">
+                            <i class="fa-solid fa-lock text-[10px] text-emerald-400"></i>
+                            <span class="truncate">https://nps-nelson.dev</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center justify-center text-center p-4">
+                        <div class="w-16 h-16 rounded-3xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-3xl mb-3">
+                            <i class="fa-solid fa-globe"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-lg">Navigateur Web NPS</h3>
+                        <p class="text-xs text-slate-400 mt-1">Explorez le web directement depuis votre téléphone virtuel.</p>
+                    </div>
+                </div>
+
+                <!-- MUSIQUE -->
+                <div id="view-music" class="app-view hidden flex flex-col h-full justify-between py-6 px-2 text-center">
+                    <div class="flex items-center justify-between">
+                        <button onclick="goHome()" class="text-indigo-400 text-sm"><i class="fa-solid fa-chevron-left"></i> Accueil</button>
+                        <span class="text-xs text-slate-400 font-semibold uppercase">En lecture</span>
+                        <div class="w-12"></div>
+                    </div>
+                    <div class="w-48 h-48 mx-auto rounded-3xl bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center text-white text-6xl shadow-2xl my-auto animate-pulse">
+                        <i class="fa-solid fa-compact-disc"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white text-lg">NPS Anthem</h3>
+                        <p class="text-xs text-slate-400 mt-1">NPS.NELSON &bull; Official Sound</p>
+                    </div>
+                    <div class="flex items-center justify-center space-x-6 my-4">
+                        <button class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-backward-step"></i></button>
+                        <button class="w-14 h-14 rounded-full bg-white text-slate-950 flex items-center justify-center text-xl shadow-lg"><i class="fa-solid fa-play"></i></button>
+                        <button class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-forward-step"></i></button>
+                    </div>
+                </div>
+
+                <!-- PARAMÈTRES -->
+                <div id="view-settings" class="app-view hidden flex flex-col h-full justify-between">
+                    <div class="flex items-center justify-between pt-2 px-2 border-b border-slate-800 pb-3">
+                        <button onclick="goHome()" class="text-indigo-400 hover:text-white text-sm"><i class="fa-solid fa-chevron-left"></i> Accueil</button>
+                        <h3 class="font-bold text-lg text-white">Réglages</h3>
+                        <div class="w-12"></div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto hide-scrollbar py-3 space-y-2">
+                        <div class="bg-slate-900 p-3 rounded-2xl flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-wifi"></i></div>
+                                <div><p class="text-xs font-semibold text-white">Wi-Fi</p><p class="text-[10px] text-slate-400">Connecté (5G)</p></div>
+                            </div>
+                            <input type="checkbox" checked class="accent-indigo-600">
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded-2xl flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center"><i class="fa-solid fa-bluetooth"></i></div>
+                                <div><p class="text-xs font-semibold text-white">Bluetooth</p><p class="text-[10px] text-slate-400">Activé</p></div>
+                            </div>
+                            <input type="checkbox" checked class="accent-indigo-600">
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded-2xl flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-moon"></i></div>
+                                <div><p class="text-xs font-semibold text-white">Mode Ne Pas Déranger</p><p class="text-[10px] text-slate-400">Désactivé</p></div>
+                            </div>
+                            <input type="checkbox" class="accent-indigo-600">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NPS AI AGENT -->
+                <div id="view-nps" class="app-view hidden flex flex-col h-full justify-between">
+                    <div class="flex items-center justify-between pt-2 px-2 border-b border-slate-800 pb-3">
+                        <button onclick="goHome()" class="text-indigo-400 hover:text-white text-sm"><i class="fa-solid fa-chevron-left"></i> Accueil</button>
+                        <h3 class="font-bold text-sm text-cyan-400">NPS.AI Assistant</h3>
+                        <div class="w-10"></div>
+                    </div>
+                    <div id="nps-chat-messages" class="flex-1 overflow-y-auto hide-scrollbar py-3 space-y-3 px-2 flex flex-col">
+                        <div class="self-start bg-cyan-950/60 border border-cyan-800/50 text-cyan-200 text-xs p-3 rounded-2xl max-w-[85%]">Bonjour ! Je suis l'intelligence artificielle intégrée à ton téléphone virtuel. Comment puis-je t'aider aujourd'hui ?</div>
+                    </div>
+                    <div class="pt-2 flex items-center space-x-2">
+                        <input id="nps-input" type="text" placeholder="Demander à NPS..." class="flex-1 bg-slate-900 border border-slate-800 rounded-full py-2.5 px-4 text-xs text-white focus:outline-none focus:border-cyan-500">
+                        <button onclick="sendNpsMessage()" class="w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center text-slate-950 font-bold"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Barre de navigation inférieure (Home Indicator) -->
+            <div class="w-full pt-3 flex justify-center items-center">
+                <button onclick="goHome()" class="w-32 h-1 bg-white/30 rounded-full hover:bg-white/60 transition-colors"></button>
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="text-xs text-slate-500 text-center mt-4">
+        Conçu et développé par NPS.NELSON &bull; Smartphone Virtuel Interactif
+    </footer>
+
+    <script>
+        // Horloge temps réel
+        setInterval(() => {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
+            document.getElementById('status-time').textContent = timeStr;
+            document.getElementById('home-time').textContent = timeStr;
+            document.getElementById('home-date').textContent = dateStr;
+        }, 1000);
+
+        // Gestion des vues
+        function openApp(appName) {
+            document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-' + appName).classList.remove('hidden');
+        }
+
+        function goHome() {
+            openApp('home');
+            endCall();
+        }
+
+        // Dialer Logic
+        let currentNumber = '';
+        function pressDial(digit) {
+            currentNumber += digit;
+            document.getElementById('dial-number').textContent = currentNumber;
+        }
+        function clearDial() {
+            currentNumber = currentNumber.slice(0, -1);
+            document.getElementById('dial-number').textContent = currentNumber;
+        }
+
+        let callInterval = null;
+        function startCall() {
+            if (!currentNumber) currentNumber = "+243 820 000 000";
+            document.getElementById('calling-number').textContent = currentNumber;
+            openApp('calling');
+            let seconds = 0;
+            const timerEl = document.getElementById('call-timer');
+            callInterval = setInterval(() => {
+                seconds++;
+                let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                let s = (seconds % 60).toString().padStart(2, '0');
+                timerEl.textContent = `${m}:${s}`;
+            }, 1000);
+        }
+
+        function endCall() {
+            if (callInterval) clearInterval(callInterval);
+            document.getElementById('call-timer').textContent = "00:00";
+            openApp('dialer');
+        }
+
+        // Chat Logic
+        function openChat(name) {
+            document.getElementById('chat-title').textContent = name;
+            openApp('chat');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const val = input.value.trim();
+            if (!val) return;
+            const chatMsgs = document.getElementById('chat-messages');
+            chatMsgs.innerHTML += `<div class="self-end bg-indigo-600 text-white text-xs p-3 rounded-2xl max-w-[80%]">${val}</div>`;
+            input.value = '';
+            chatMsgs.scrollTop = chatMsgs.scrollHeight;
+
+            setTimeout(() => {
+                chatMsgs.innerHTML += `<div class="self-start bg-slate-800 text-slate-200 text-xs p-3 rounded-2xl max-w-[80%]">Message bien reçu ! C'est noté.</div>`;
+                chatMsgs.scrollTop = chatMsgs.scrollHeight;
+            }, 1000);
+        }
+
+        // NPS AI Logic
+        function sendNpsMessage() {
+            const input = document.getElementById('nps-input');
+            const val = input.value.trim();
+            if (!val) return;
+            const npsMsgs = document.getElementById('nps-chat-messages');
+            npsMsgs.innerHTML += `<div class="self-end bg-cyan-600 text-slate-950 font-medium text-xs p-3 rounded-2xl max-w-[85%]">${val}</div>`;
+            input.value = '';
+            npsMsgs.scrollTop = npsMsgs.scrollHeight;
+
+            setTimeout(() => {
+                npsMsgs.innerHTML += `<div class="self-start bg-cyan-950/60 border border-cyan-800/50 text-cyan-200 text-xs p-3 rounded-2xl max-w-[85%]">En tant qu'assistant intelligent propulsé par NPS.NELSON, je confirme que ce système est 100% opérationnel !</div>`;
+                npsMsgs.scrollTop = npsMsgs.scrollHeight;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
