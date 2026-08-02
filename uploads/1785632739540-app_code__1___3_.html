@@ -1,0 +1,659 @@
+[Contenu du fichier "app_code (1) (3).html"] :
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPS PhoneOS v5 — Navigateur Web Paginé</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .code-font { font-family: 'Fira Code', monospace; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .torch-active { background-color: #ffffff !important; color: #000000 !important; }
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-anim { animation: slideUp 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 select-none">
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="fixed bottom-20 z-[100] flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- Coque du Smartphone -->
+    <div id="phone-shell" class="relative w-full max-w-[390px] h-[800px] bg-black rounded-[50px] p-3 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] border-4 border-slate-800 flex flex-col justify-between overflow-hidden transition-all duration-300">
+        
+        <!-- Torche Overlay -->
+        <div id="torch-overlay" class="absolute inset-0 bg-transparent z-[70] pointer-events-none transition-colors duration-300"></div>
+
+        <!-- Panneau de Contrôle Coulissant -->
+        <div id="control-panel" class="absolute top-0 left-0 right-0 h-[320px] bg-slate-900/95 backdrop-blur-xl z-[60] -translate-y-full transition-transform duration-300 rounded-b-[40px] p-6 border-b border-slate-700 flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center text-xs font-semibold text-slate-400">
+                <span>Panneau de contrôle</span>
+                <button onclick="toggleControlPanel()" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-white"><i class="fa-solid fa-chevron-up"></i></button>
+            </div>
+            <div class="grid grid-cols-4 gap-3">
+                <button id="quick-wifi" onclick="toggleQuick('wifi')" class="flex flex-col items-center justify-center h-20 rounded-2xl bg-blue-600 text-white transition-all">
+                    <i class="fa-solid fa-wifi text-xl mb-1"></i>
+                    <span class="text-[10px]">Wi-Fi</span>
+                </button>
+                <button id="quick-torch" onclick="toggleTorch()" class="flex flex-col items-center justify-center h-20 rounded-2xl bg-slate-800 text-slate-300 transition-all">
+                    <i class="fa-solid fa-bolt text-xl mb-1"></i>
+                    <span class="text-[10px]">Torche</span>
+                </button>
+                <button id="quick-bt" onclick="toggleQuick('bt')" class="flex flex-col items-center justify-center h-20 rounded-2xl bg-blue-600 text-white transition-all">
+                    <i class="fa-solid fa-bluetooth text-xl mb-1"></i>
+                    <span class="text-[10px]">Bluetooth</span>
+                </button>
+                <button id="quick-plane" onclick="toggleQuick('plane')" class="flex flex-col items-center justify-center h-20 rounded-2xl bg-slate-800 text-slate-300 transition-all">
+                    <i class="fa-solid fa-plane text-xl mb-1"></i>
+                    <span class="text-[10px]">Avion</span>
+                </button>
+            </div>
+            <div class="bg-slate-800/80 rounded-2xl p-3 flex items-center space-x-3">
+                <i class="fa-solid fa-sun text-amber-400"></i>
+                <input type="range" min="20" max="100" value="100" oninput="adjustBrightness(this.value)" class="w-full accent-indigo-500 cursor-pointer">
+            </div>
+        </div>
+
+        <!-- Barre supérieure -->
+        <div onclick="toggleControlPanel()" class="absolute top-0 left-0 right-0 h-11 bg-black z-50 flex items-center justify-between px-6 pt-2 text-xs font-semibold text-white cursor-pointer">
+            <span id="status-time">09:41</span>
+            <div class="w-24 h-5 bg-black rounded-full border border-slate-800 flex items-center justify-center space-x-1 px-2">
+                <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                <div class="w-2 h-2 rounded-full bg-slate-800"></div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-signal text-[10px]"></i>
+                <i class="fa-solid fa-wifi text-[10px]"></i>
+                <i class="fa-solid fa-battery-full text-emerald-400"></i>
+            </div>
+        </div>
+
+        <!-- Écran du téléphone -->
+        <div id="phone-screen" class="relative w-full h-full bg-slate-900 rounded-[38px] pt-12 pb-14 px-3 flex flex-col justify-between overflow-hidden transition-all duration-300">
+            
+            <!-- FOND D'ÉCRAN DYNAMIQUE (LANGAGES DE PROGRAMMATION) -->
+            <div id="wallpaper-bg" class="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 z-0 flex items-center justify-center pointer-events-none opacity-40 overflow-hidden">
+                <pre class="code-font text-[11px] text-indigo-400/40 leading-relaxed whitespace-pre p-4">
+def nps_phone_os():
+    print("100% Hors Ligne")
+    while True:
+        sync_offline_db()
+        render_ui()
+
+function initBrowser() {
+    loadMillionsOfResults();
+    enablePagination();
+}
+                </pre>
+            </div>
+            
+            <!-- CONTENEUR DES APPLICATIONS -->
+            <div id="app-viewport" class="relative z-10 w-full h-full flex flex-col overflow-hidden">
+                
+                <!-- HOME SCREEN -->
+                <div id="view-home" class="app-view flex flex-col h-full justify-between pb-2">
+                    <div class="mt-2 bg-white/10 backdrop-blur-md rounded-3xl p-4 border border-white/10 flex items-center justify-between shadow-lg">
+                        <div>
+                            <p id="home-date" class="text-[11px] text-indigo-300 font-medium">LUNDI 24 OCTOBRE</p>
+                            <h2 id="home-time" class="text-3xl font-bold tracking-tight text-white mt-0.5">09:41</h2>
+                        </div>
+                        <div class="text-right">
+                            <i class="fa-solid fa-cloud-sun text-2xl text-amber-300 mb-1"></i>
+                            <p class="text-[11px] text-slate-300 font-medium">24°C • Kinshasa</p>
+                        </div>
+                    </div>
+
+                    <!-- Grille d'applications -->
+                    <div class="grid grid-cols-4 gap-y-4 gap-x-3 px-1 my-auto overflow-y-auto hide-scrollbar">
+                        <button onclick="openApp('dialer')" class="flex flex-col items-center group">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-phone text-xl text-white"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-300 mt-1 font-medium">Téléphone</span>
+                        </button>
+                        <button onclick="openApp('messages')" class="flex flex-col items-center group">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg group-active:scale-95 transition-transform relative">
+                                <i class="fa-solid fa-message text-xl text-white"></i>
+                                <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center">2</span>
+                            </div>
+                            <span class="text-[10px] text-slate-300 mt-1 font-medium">Messages</span>
+                        </button>
+                        <button onclick="openApp('gallery')" class="flex flex-col items-center group">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center shadow-lg group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-images text-xl text-white"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-300 mt-1 font-medium">Galerie</span>
+                        </button>
+                        <button onclick="openApp('music')" class="flex flex-col items-center group">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-violet-500 to-purple-600 flex items-center justify-center shadow-lg group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-music text-xl text-white"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-300 mt-1 font-medium">Musique</span>
+                        </button>
+                        <button onclick="openApp('notes')" class="flex flex-col items-center group">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-note-sticky text-xl text-white"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-300 mt-1 font-medium">Notes</span>
+                        </button>
+                        <button onclick="openApp('calc')" class="flex flex-col items-center group">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-600 flex items-center justify-center shadow-lg group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-calculator text-xl text-white"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-300 mt-1 font-medium">Calculatrice</span>
+                        </button>
+                        <button onclick="openApp('games')" class="flex flex-col items-center group">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-gamepad text-xl text-white"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-300 mt-1 font-medium">Jeux</span>
+                        </button>
+                        <button onclick="openApp('browser')" class="flex flex-col items-center group">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center shadow-lg group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-globe text-xl text-white"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-300 mt-1 font-medium">Safari</span>
+                        </button>
+                        <button onclick="openApp('settings')" class="flex flex-col items-center group">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-slate-600 to-slate-500 flex items-center justify-center shadow-lg group-active:scale-95 transition-transform">
+                                <i class="fa-solid fa-gear text-xl text-white"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-300 mt-1 font-medium">Réglages</span>
+                        </button>
+                        <button onclick="openApp('nps')" class="flex flex-col items-center group">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg group-active:scale-95 transition-transform animate-pulse">
+                                <i class="fa-solid fa-robot text-xl text-white"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-300 mt-1 font-medium">NPS.AI</span>
+                        </button>
+                    </div>
+
+                    <div class="flex justify-center items-center space-x-1.5 py-1">
+                        <div class="w-2 h-2 rounded-full bg-white"></div>
+                        <div class="w-2 h-2 rounded-full bg-white/40"></div>
+                    </div>
+                </div>
+
+                <!-- APPLICATION : GALERIE PHOTOS -->
+                <div id="view-gallery" class="app-view hidden flex flex-col h-full bg-slate-950 rounded-3xl p-3 overflow-hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-images text-pink-400 mr-2"></i> Galerie Photos</h3>
+                        <button onclick="goHome()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full">Fermer</button>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mb-3">Tes 5 images loufoques de cuisine et de développeur :</p>
+                    <div id="gallery-grid" class="grid grid-cols-2 gap-2 overflow-y-auto hide-scrollbar pr-1"></div>
+                </div>
+
+                <!-- APPLICATION : MUSIQUE -->
+                <div id="view-music" class="app-view hidden flex flex-col h-full bg-slate-950 rounded-3xl p-3 overflow-hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-music text-purple-400 mr-2"></i> Lecteur & Playlists</h3>
+                        <button onclick="goHome()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full">Fermer</button>
+                    </div>
+                    <div class="bg-gradient-to-tr from-purple-900/40 to-indigo-900/40 border border-purple-500/20 rounded-2xl p-4 text-center mb-3">
+                        <div class="w-16 h-16 mx-auto bg-purple-600/30 rounded-full flex items-center justify-center mb-2 shadow-lg animate-pulse">
+                            <i class="fa-solid fa-compact-disc text-2xl text-purple-300"></i>
+                        </div>
+                        <h4 id="current-track-title" class="text-sm font-bold text-white">Sélectionne un morceau</h4>
+                        <p class="text-[10px] text-slate-400 mt-0.5">100% Hors Ligne • Audio Engine</p>
+                        <div class="flex justify-center items-center space-x-4 mt-3 text-white">
+                            <button onclick="prevMusic()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-backward-step"></i></button>
+                            <button id="play-btn" onclick="togglePlayMusic()" class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center shadow-lg"><i class="fa-solid fa-play"></i></button>
+                            <button onclick="nextMusic()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-forward-step"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold text-slate-300">Morceaux disponibles</span>
+                        <button onclick="createPlaylist()" class="text-[10px] bg-purple-600/30 text-purple-300 px-2.5 py-1 rounded-lg"><i class="fa-solid fa-plus mr-1"></i> Playlist</button>
+                    </div>
+                    <div id="tracks-container" class="space-y-2 overflow-y-auto hide-scrollbar pr-1"></div>
+                </div>
+
+                <!-- APPLICATION : NAVIGATEUR WEB HORS LIGNE GÉANT (PAGINÉ) -->
+                <div id="view-browser" class="app-view hidden flex flex-col h-full bg-slate-950 rounded-3xl p-3 overflow-hidden">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 w-full mr-2">
+                            <i class="fa-solid fa-magnifying-glass text-xs text-slate-400"></i>
+                            <input type="text" id="browser-input" placeholder="Rechercher des millions de documents..." class="bg-transparent text-xs text-white focus:outline-none w-full" onkeypress="if(event.key==='Enter') performSearch(1)">
+                        </div>
+                        <button onclick="goHome()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1.5 rounded-xl shrink-0">Fermer</button>
+                    </div>
+                    
+                    <!-- Conteneur dynamique des résultats de recherche ou article détaillé -->
+                    <div id="browser-content" class="flex flex-col h-full overflow-y-auto hide-scrollbar pr-1">
+                        <div class="text-center my-auto p-4">
+                            <div class="w-12 h-12 mx-auto bg-purple-600/20 rounded-2xl flex items-center justify-center mb-3 text-purple-400">
+                                <i class="fa-solid fa-globe text-xl"></i>
+                            </div>
+                            <h4 class="text-xs font-bold text-white mb-1">Navigateur Web Offline Géant</h4>
+                            <p class="text-[10px] text-slate-400">Tape un mot-clé (ex: *Python*, *Kinshasa*, *Astrophysique*, *Code*) pour générer des millions de résultats répartis sur plusieurs pages consultables.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- APPLICATION : NOTES SÉCURISÉES -->
+                <div id="view-notes" class="app-view hidden flex flex-col h-full bg-slate-950 rounded-3xl p-3 overflow-hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-note-sticky text-amber-400 mr-2"></i> Notes Sécurisées</h3>
+                        <button onclick="goHome()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full">Fermer</button>
+                    </div>
+                    <textarea id="note-text" class="w-full h-full bg-slate-900 text-white text-xs p-3 rounded-2xl border border-slate-800 focus:outline-none resize-none mb-3" placeholder="Écris tes notes ici (sauvegardées hors ligne)..."></textarea>
+                    <button onclick="saveNote()" class="w-full py-2.5 bg-amber-500 text-slate-950 text-xs font-bold rounded-xl shadow-lg">Enregistrer la note</button>
+                </div>
+
+                <!-- APPLICATION : CALCULATRICE -->
+                <div id="view-calc" class="app-view hidden flex flex-col h-full bg-slate-950 rounded-3xl p-3 overflow-hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-calculator text-orange-400 mr-2"></i> Calculatrice</h3>
+                        <button onclick="goHome()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full">Fermer</button>
+                    </div>
+                    <div id="calc-display" class="bg-slate-900 text-right text-3xl font-mono text-white p-4 rounded-2xl mb-3 border border-slate-800 overflow-x-auto">0</div>
+                    <div class="grid grid-cols-4 gap-2 mt-auto">
+                        <button onclick="calcClear()" class="p-3 bg-slate-800 rounded-xl text-red-400 font-bold text-xs">C</button>
+                        <button onclick="calcAppend('/')" class="p-3 bg-slate-800 rounded-xl text-indigo-400 font-bold text-xs">÷</button>
+                        <button onclick="calcAppend('*')" class="p-3 bg-slate-800 rounded-xl text-indigo-400 font-bold text-xs">×</button>
+                        <button onclick="calcAppend('-')" class="p-3 bg-slate-800 rounded-xl text-indigo-400 font-bold text-xs">-</button>
+                        <button onclick="calcAppend('7')" class="p-3 bg-slate-900 rounded-xl text-white text-xs">7</button>
+                        <button onclick="calcAppend('8')" class="p-3 bg-slate-900 rounded-xl text-white text-xs">8</button>
+                        <button onclick="calcAppend('9')" class="p-3 bg-slate-900 rounded-xl text-white text-xs">9</button>
+                        <button onclick="calcAppend('+')" class="p-3 bg-slate-800 rounded-xl text-indigo-400 font-bold text-xs">+</button>
+                        <button onclick="calcAppend('4')" class="p-3 bg-slate-900 rounded-xl text-white text-xs">4</button>
+                        <button onclick="calcAppend('5')" class="p-3 bg-slate-900 rounded-xl text-white text-xs">5</button>
+                        <button onclick="calcAppend('6')" class="p-3 bg-slate-900 rounded-xl text-white text-xs">6</button>
+                        <button onclick="calcCompute()" class="row-span-2 p-3 bg-indigo-600 rounded-xl text-white font-bold text-xs flex items-center justify-center">=</button>
+                        <button onclick="calcAppend('1')" class="p-3 bg-slate-900 rounded-xl text-white text-xs">1</button>
+                        <button onclick="calcAppend('2')" class="p-3 bg-slate-900 rounded-xl text-white text-xs">2</button>
+                        <button onclick="calcAppend('3')" class="p-3 bg-slate-900 rounded-xl text-white text-xs">3</button>
+                        <button onclick="calcAppend('0')" class="col-span-2 p-3 bg-slate-900 rounded-xl text-white text-xs">0</button>
+                        <button onclick="calcAppend('.')" class="p-3 bg-slate-900 rounded-xl text-white text-xs">.</button>
+                    </div>
+                </div>
+
+                <!-- APPLICATION : CENTRE DE JEUX -->
+                <div id="view-games" class="app-view hidden flex flex-col h-full bg-slate-950 rounded-3xl p-3 overflow-hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-gamepad text-indigo-400 mr-2"></i> Centre de Jeux</h3>
+                        <button onclick="goHome()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full">Fermer</button>
+                    </div>
+                    <div class="space-y-2 overflow-y-auto hide-scrollbar pr-1">
+                        <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div>
+                                <h4 class="text-xs font-bold text-white">Snake Classic</h4>
+                                <p class="text-[10px] text-slate-400">Jeu du serpent rétro offline</p>
+                            </div>
+                            <button onclick="showToast('Lancement de Snake...')" class="px-3 py-1.5 bg-indigo-600 text-white text-[10px] font-bold rounded-xl">Jouer</button>
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div>
+                                <h4 class="text-xs font-bold text-white">Morpion Tactique</h4>
+                                <p class="text-[10px] text-slate-400">Affronte l'IA locale</p>
+                            </div>
+                            <button onclick="showToast('Lancement de Morpion...')" class="px-3 py-1.5 bg-indigo-600 text-white text-[10px] font-bold rounded-xl">Jouer</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- APPLICATION : RÉGLAGES (AVEC SÉLECTEUR DE FONDS D'ÉCRAN LANGAGES DE PROGRAMMATION) -->
+                <div id="view-settings" class="app-view hidden flex flex-col h-full bg-slate-950 rounded-3xl p-3 overflow-hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-gear text-slate-400 mr-2"></i> Réglages</h3>
+                        <button onclick="goHome()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full">Fermer</button>
+                    </div>
+                    <div class="space-y-3 overflow-y-auto hide-scrollbar pr-1">
+                        <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+                            <h4 class="text-xs font-bold text-white mb-2"><i class="fa-solid fa-palette text-indigo-400 mr-1.5"></i> Fonds d'écran Langages & Code</h4>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="setWallpaper('python')" class="p-2 bg-slate-800 hover:bg-indigo-600 rounded-xl text-[10px] text-white font-mono transition-all">Python</button>
+                                <button onclick="setWallpaper('javascript')" class="p-2 bg-slate-800 hover:bg-indigo-600 rounded-xl text-[10px] text-white font-mono transition-all">JavaScript</button>
+                                <button onclick="setWallpaper('html')" class="p-2 bg-slate-800 hover:bg-indigo-600 rounded-xl text-[10px] text-white font-mono transition-all">HTML/CSS</button>
+                                <button onclick="setWallpaper('rust')" class="p-2 bg-slate-800 hover:bg-indigo-600 rounded-xl text-[10px] text-white font-mono transition-all">Rust</button>
+                                <button onclick="setWallpaper('cpp')" class="p-2 bg-slate-800 hover:bg-indigo-600 rounded-xl text-[10px] text-white font-mono transition-all">C++</button>
+                                <button onclick="setWallpaper('matrix')" class="p-2 bg-slate-800 hover:bg-indigo-600 rounded-xl text-[10px] text-emerald-400 font-mono transition-all">Matrix</button>
+                            </div>
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div>
+                                <h4 class="text-xs font-bold text-white">Stockage Sécurisé</h4>
+                                <p class="text-[10px] text-slate-400">LocalStorage actif (100% offline)</p>
+                            </div>
+                            <span class="text-[10px] text-emerald-400 font-bold">128 Go</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- APPLICATION : NPS.AI -->
+                <div id="view-nps" class="app-view hidden flex flex-col h-full bg-slate-950 rounded-3xl p-3 overflow-hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-robot text-cyan-400 mr-2"></i> NPS.AI Assistant</h3>
+                        <button onclick="goHome()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full">Fermer</button>
+                    </div>
+                    <div id="ai-chat" class="flex-col h-full bg-slate-900/60 rounded-2xl p-3 border border-slate-800 overflow-y-auto hide-scrollbar space-y-2 mb-3 text-xs">
+                        <div class="bg-slate-800 p-2.5 rounded-xl text-slate-200">Salut ! Je suis ton assistant NPS.AI intégré. Comment puis-je t'aider ?</div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <input type="text" id="ai-input" placeholder="Pose ta question..." class="bg-slate-900 text-xs text-white px-3 py-2 rounded-xl border border-slate-800 focus:outline-none w-full" onkeypress="if(event.key==='Enter') sendAI()">
+                        <button onclick="sendAI()" class="bg-cyan-500 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+
+                <!-- VUES TÉLÉPHONE & MESSAGES SIMULÉES -->
+                <div id="view-dialer" class="app-view hidden flex flex-col h-full bg-slate-950 rounded-3xl p-3 overflow-hidden">
+                    <div class="flex justify-between items-center mb-4"><h3 class="text-sm font-bold text-white">Téléphone</h3><button onclick="goHome()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full">Fermer</button></div>
+                    <div class="text-center my-auto"><div class="text-2xl font-bold text-white mb-2" id="dial-display">099000000</div><div class="grid grid-cols-3 gap-3 w-48 mx-auto"><button onclick="dialNum('1')" class="p-3 bg-slate-900 rounded-full text-white font-bold">1</button><button onclick="dialNum('2')" class="p-3 bg-slate-900 rounded-full text-white font-bold">2</button><button onclick="dialNum('3')" class="p-3 bg-slate-900 rounded-full text-white font-bold">3</button><button onclick="dialNum('4')" class="p-3 bg-slate-900 rounded-full text-white font-bold">4</button><button onclick="dialNum('5')" class="p-3 bg-slate-900 rounded-full text-white font-bold">5</button><button onclick="dialNum('6')" class="p-3 bg-slate-900 rounded-full text-white font-bold">6</button></div></div>
+                </div>
+
+                <div id="view-messages" class="app-view hidden flex flex-col h-full bg-slate-950 rounded-3xl p-3 overflow-hidden">
+                    <div class="flex justify-between items-center mb-3"><h3 class="text-sm font-bold text-white">Messages</h3><button onclick="goHome()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full">Fermer</button></div>
+                    <div class="space-y-2"><div class="bg-slate-900 p-3 rounded-2xl border border-slate-800"><h4 class="text-xs font-bold text-white">NPS Developer</h4><p class="text-[10px] text-slate-400">Le système PhoneOS est 100% opérationnel !</p></div></div>
+                </div>
+
+            </div>
+
+            <!-- Barre de navigation 3 boutons cliquables en bas -->
+            <div class="absolute bottom-2 left-0 right-0 h-10 bg-black/80 backdrop-blur-md z-50 flex items-center justify-around px-8">
+                <button onclick="navBack()" class="w-10 h-8 flex items-center justify-center text-slate-400 hover:text-white active:scale-95 transition-transform"><i class="fa-solid fa-chevron-left text-sm"></i></button>
+                <button onclick="goHome()" class="w-10 h-8 flex items-center justify-center text-slate-400 hover:text-white active:scale-95 transition-transform"><i class="fa-solid fa-circle text-xs"></i></button>
+                <button onclick="navRecent()" class="w-10 h-8 flex items-center justify-center text-slate-400 hover:text-white active:scale-95 transition-transform"><i class="fa-solid fa-square text-xs"></i></button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Horloge temps réel
+        setInterval(() => {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('status-time').innerText = timeStr;
+            const homeTime = document.getElementById('home-time');
+            if (homeTime) homeTime.innerText = timeStr;
+        }, 1000);
+
+        // Toast Notification (Zéro Popup)
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'bg-slate-900/95 backdrop-blur-md text-white text-xs px-4 py-2.5 rounded-2xl border border-slate-700 shadow-2xl toast-anim flex items-center space-x-2';
+            toast.innerHTML = `<i class="fa-solid fa-circle-info text-indigo-400"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Navigation Apps
+        let currentApp = 'home';
+        let appHistory = ['home'];
+
+        function openApp(appName) {
+            document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('view-' + appName);
+            if (target) {
+                target.classList.remove('hidden');
+                currentApp = appName;
+                appHistory.push(appName);
+            }
+        }
+
+        function goHome() {
+            document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-home').classList.remove('hidden');
+            currentApp = 'home';
+            appHistory = ['home'];
+        }
+
+        function navBack() {
+            if (appHistory.length > 1) {
+                appHistory.pop();
+                const prev = appHistory[appHistory.length - 1];
+                document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
+                document.getElementById('view-' + prev).classList.remove('hidden');
+                currentApp = prev;
+            } else {
+                goHome();
+            }
+        }
+
+        function navRecent() {
+            showToast("Applications récentes : " + appHistory.join(' → '));
+        }
+
+        // Panneau de contrôle coulissant
+        let controlOpen = false;
+        function toggleControlPanel() {
+            controlOpen = !controlOpen;
+            const panel = document.getElementById('control-panel');
+            if (controlOpen) panel.classList.remove('-translate-y-full');
+            else panel.classList.add('-translate-y-full');
+        }
+
+        function toggleQuick(type) {
+            const btn = document.getElementById('quick-' + type);
+            btn.classList.toggle('bg-blue-600');
+            btn.classList.toggle('bg-slate-800');
+            showToast(type.toUpperCase() + " basculé");
+        }
+
+        let torchActive = false;
+        function toggleTorch() {
+            torchActive = !torchActive;
+            const btn = document.getElementById('quick-torch');
+            const overlay = document.getElementById('torch-overlay');
+            if (torchActive) {
+                btn.classList.add('torch-active');
+                overlay.classList.remove('bg-transparent');
+                overlay.classList.add('bg-white');
+                showToast("Torche activée");
+            } else {
+                btn.classList.remove('torch-active');
+                overlay.classList.remove('bg-white');
+                overlay.classList.add('bg-transparent');
+                showToast("Torche éteinte");
+            }
+        }
+
+        function adjustBrightness(val) {
+            document.getElementById('phone-screen').style.opacity = val / 100;
+        }
+
+        // Sélecteur de fonds d'écran de langages de programmation
+        const wallpapers = {
+            python: `def nps_python():\n    print("NPS PhoneOS Python Mode")\n    data = fetch_offline_db()\n    return len(data)`,
+            javascript: `const npsOS = {\n    version: 5,\n    offline: true,\n    render() {\n        console.log("Running JS Engine");\n    }\n};`,
+            html: `<!DOCTYPE html>\n<html>\n<head><title>NPS</title></head>\n<body><h1>Offline Web</h1></body>\n</html>`,
+            rust: `fn main() {\n    println!("NPS Rust Engine v5 100% offline");\n}`,
+            cpp: `#include <iostream>\nusing namespace std;\nint main() {\n    cout << "NPS C++ Kernel" << endl;\n    return 0;\n}`,
+            matrix: `01001110 01010000 01010011\nNPS.NELSON OFFLINE KERNEL\nSECURE OS v5 ACTIVE\n01001110 01010000 01010011`
+        };
+
+        function setWallpaper(lang) {
+            const bg = document.getElementById('wallpaper-bg');
+            bg.querySelector('pre').innerText = wallpapers[lang] || wallpapers.python;
+            showToast("Fond d'écran " + lang.toUpperCase() + " appliqué !");
+        }
+
+        // Galerie Photos : 5 images loufoques
+        const galleryImages = [
+            { title: "Dev Triomphant", url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400" },
+            { title: "Cuisine Seau & Farine", url: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400" },
+            { title: "Le Chef Casseroles", url: "https://images.unsplash.com/photo-1507048331197-7d4ac70b11cf?w=400" },
+            { title: "Désastre Culinaire", url: "https://images.unsplash.com/photo-1574484284002-712d98435f3e?w=400" },
+            { title: "Génie du Code & Soupe", url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400" }
+        ];
+
+        function loadGallery() {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = galleryImages.map(img => `
+                <div class="bg-slate-900 rounded-2xl p-2 border border-slate-800 flex flex-col items-center">
+                    <img src="${img.url}" class="w-full h-28 object-cover rounded-xl mb-1.5" alt="${img.title}">
+                    <span class="text-[10px] text-slate-300 font-medium text-center">${img.title}</span>
+                </div>
+            `).join('');
+        }
+        loadGallery();
+
+        // Musique
+        let musicPlaying = false;
+        let allTracks = ["Lo-Fi Code", "Cyber Synth", "Jazz Casserole", "Kitchen Funk", "Epic Build", "Kinshasa Night"];
+
+        function loadMusicApp() {
+            const trContainer = document.getElementById('tracks-container');
+            trContainer.innerHTML = allTracks.map(t => `
+                <div onclick="selectTrack('${t}')" class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between cursor-pointer hover:bg-slate-800 transition-colors">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-lg bg-purple-600/20 text-purple-400 flex items-center justify-center"><i class="fa-solid fa-music text-xs"></i></div>
+                        <div><h4 class="text-xs font-bold text-white">${t}</h4><p class="text-[9px] text-slate-400">NPS Audio Engine</p></div>
+                    </div>
+                    <i class="fa-solid fa-play text-xs text-purple-400"></i>
+                </div>
+            `).join('');
+        }
+        loadMusicApp();
+
+        function selectTrack(title) {
+            document.getElementById('current-track-title').innerText = title;
+            musicPlaying = true;
+            document.getElementById('play-btn').innerHTML = '<i class="fa-solid fa-pause"></i>';
+            showToast("Lecture : " + title);
+        }
+
+        function togglePlayMusic() {
+            musicPlaying = !musicPlaying;
+            document.getElementById('play-btn').innerHTML = musicPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+            showToast(musicPlaying ? "Lecture en cours" : "Pause");
+        }
+
+        function nextMusic() { showToast("Morceau suivant"); }
+        function prevMusic() { showToast("Morceau précédent"); }
+        function createPlaylist() { showToast("Création de playlist..."); }
+
+        // NAVIGATEUR WEB OFFLINE GÉANT AVEC MULTIPLES PAGES ET ARTICLES OUVRIR
+        let currentSearchQuery = "";
+        let currentSearchPage = 1;
+
+        function performSearch(page = 1) {
+            const inputVal = document.getElementById('browser-input').value.trim();
+            if (inputVal) currentSearchQuery = inputVal;
+            currentSearchPage = page;
+            const query = currentSearchQuery || "technologie";
+            const container = document.getElementById('browser-content');
+            
+            // Simulation de millions de résultats avec pagination
+            const resultsPerPage = 3;
+            const totalResults = 4250890; // des millions !
+            const totalPages = 5;
+
+            let htmlResults = `
+                <div class="text-[10px] text-slate-400 mb-2">Environ ${totalResults.toLocaleString()} résultats (0.04 secondes) - 100% Hors Ligne</div>
+                <div class="space-y-2.5">
+            `;
+
+            const startIndex = (page - 1) * resultsPerPage;
+            for (let i = 1; i <= resultsPerPage; i++) {
+                const itemNum = startIndex + i;
+                htmlResults += `
+                    <div onclick="openArticle('${query}', ${itemNum})" class="bg-slate-900 p-3 rounded-2xl border border-slate-800 cursor-pointer hover:border-purple-500/50 transition-all">
+                        <span class="text-[9px] text-indigo-400 font-mono">nps-offline://encyclopedia/doc-${itemNum}</span>
+                        <h4 class="text-xs font-bold text-white mt-0.5">${query.toUpperCase()} - Article Documentaire N°${itemNum}</h4>
+                        <p class="text-[10px] text-slate-400 mt-1 line-clamp-2">Analyse complète et détaillée sur ${query} générée par la base neuronale locale NPS. Explore les concepts avancés, l'historique et les applications pratiques...</p>
+                    </div>
+                `;
+            }
+
+            htmlResults += `</div>`;
+
+            // Pagination (boutons de pages multiples 1, 2, 3...)
+            htmlResults += `
+                <div class="flex items-center justify-center space-x-1.5 mt-4 pt-3 border-t border-slate-800">
+            `;
+            for (let p = 1; p <= totalPages; p++) {
+                const activeClass = p === page ? 'bg-purple-600 text-white font-bold' : 'bg-slate-900 text-slate-400';
+                htmlResults += `<button onclick="performSearch(${p})" class="w-7 h-7 rounded-lg text-xs ${activeClass} flex items-center justify-center">${p}</button>`;
+            }
+            htmlResults += `</div>`;
+
+            container.innerHTML = htmlResults;
+            showToast(`Page ${page} chargée (millions de résultats indexés)`);
+        }
+
+        // Ouvrir un article détaillé complet
+        function openArticle(query, docNum) {
+            const container = document.getElementById('browser-content');
+            container.innerHTML = `
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+                    <button onclick="performSearch(${currentSearchPage})" class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-xl flex items-center space-x-1">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Retour aux résultats
+                    </button>
+                    <span class="text-[10px] text-indigo-400 font-mono">Doc #${docNum}</span>
+                </div>
+                <div class="space-y-3 text-xs text-slate-200">
+                    <h2 class="text-base font-bold text-white">${query.toUpperCase()} — Dossier Encyclopédique Avancé</h2>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">Cet article fait partie des millions de ressources indexées dans la base de données intégrée de NPS PhoneOS. Il examine en profondeur les aspects fondamentaux de <strong>${query}</strong>.</p>
+                    <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+                        <h4 class="text-xs font-bold text-indigo-300 mb-1">1. Introduction & Contexte</h4>
+                        <p class="text-[10px] text-slate-300">Dans le cadre du développement moderne, ${query} représente un pilier essentiel. Les ingénieurs et créateurs exploitent ces principes pour concevoir des architectures robustes et 100% autonomes.</p>
+                    </div>
+                    <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+                        <h4 class="text-xs font-bold text-indigo-300 mb-1">2. Analyse Technique & Exemples</h4>
+                        <p class="text-[10px] text-slate-300">L'implémentation locale garantit une exécution sans latence et sans dépendance réseau externe. Tout est exécuté directement dans l'environnement virtuel du navigateur.</p>
+                    </div>
+                </div>
+            `;
+            showToast("Article complet ouvert");
+        }
+
+        // Notes
+        function saveNote() {
+            const text = document.getElementById('note-text').value;
+            if (text) {
+                localStorage.setItem('nps_note', text);
+                showToast("Note sauvegardée !");
+            }
+        }
+
+        // Calculatrice
+        let calcVal = "";
+        function calcAppend(char) { calcVal += char; document.getElementById('calc-display').innerText = calcVal; }
+        function calcClear() { calcVal = ""; document.getElementById('calc-display').innerText = "0"; }
+        function calcCompute() {
+            try { calcVal = eval(calcVal).toString(); document.getElementById('calc-display').innerText = calcVal; }
+            catch { showToast("Erreur"); calcClear(); }
+        }
+
+        // NPS.AI
+        function sendAI() {
+            const input = document.getElementById('ai-input');
+            const chat = document.getElementById('ai-chat');
+            const text = input.value.trim();
+            if (!text) return;
+
+            chat.innerHTML += `<div class="bg-indigo-950 p-2.5 rounded-xl text-slate-200 ml-4"><b>Toi :</b> ${text}</div>`;
+            input.value = "";
+
+            setTimeout(() => {
+                let reply = "En tant qu'assistant NPS.AI 100% hors ligne, je traite ta demande instantanément depuis le noyau local.";
+                if (text.toLowerCase().includes('bonjour')) reply = "Bonjour ! Prêt pour coder de nouvelles applications ?";
+                chat.innerHTML += `<div class="bg-slate-800 p-2.5 rounded-xl text-slate-200 mr-4"><b>NPS.AI :</b> ${reply}</div>`;
+                chat.scrollTop = chat.scrollHeight;
+            }, 600);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function dialNum(n) {
+            const d = document.getElementById('dial-display');
+            if(d.innerText === "099000000") d.innerText = n;
+            else d.innerText += n;
+        }
+    </script>
+</body>
+</html>
