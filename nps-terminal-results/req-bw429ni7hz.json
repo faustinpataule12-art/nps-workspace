@@ -1,0 +1,1 @@
+{"success":false,"exit_code":1,"output":"/home/runner/work/nps-workspace/nps-workspace/generate_test_song.js:4\n  const page = await browser.new_page();\n                             ^\n\nTypeError: browser.new_page is not a function\n    at /home/runner/work/nps-workspace/nps-workspace/generate_test_song.js:4:30\n\nNode.js v22.23.1\n"}
