@@ -1,0 +1,589 @@
+[Contenu de l'archive ZIP "Code View.zip"] :
+
+Archive "Code View.zip" — 16 fichier(s) :
+README.md
+package.json
+index-37.html
+KEYSTORE.md
+capacitor.config.json
+resources/icon.png
+resources/README.txt
+resources/splash.png
+android-overrides/build.gradle
+android-overrides/gradle.properties
+android-overrides/app/build.gradle
+android-overrides/app/proguard-rules.pro
+android-overrides/app/src/main/AndroidManifest.xml
+android-overrides/app/src/main/java/com/nps/viewer/MainActivity.java
+android-overrides/app/src/main/res/xml/file_paths.xml
+android-overrides/app/src/main/res/values/styles.xml
+
+---
+
+Fichier : README.md
+Contenu :
+# NPS Viewer — squelette de release complet
+
+Tu as déjà `index.html` (l'app). Ce paquet contient tout le reste : la config
+Capacitor, les fichiers Android natifs à appliquer par-dessus le projet généré,
+les assets icône/splash, et le workflow GitHub Actions qui construit et signe
+l'APK de bout en bout.
+
+## Structure à avoir dans ton repo GitHub
+
+  repo/
+    index.html                 <- le tien, à placer à la racine
+    package.json                (fourni ici)
+    capacitor.config.json        (fourni ici)
+    resources/
+      icon.png                  (fourni ici, 1024x1024)
+      splash.png                (fourni ici, 2732x2732 carré)
+    android-overrides/          (fourni ici, appliqué automatiquement par le workflow)
+    .github/workflows/release-apk.yml   (fourni ici)
+
+Il ne faut PAS committer de dossier `android/` toi-même : le workflow le
+génère à chaque run avec `npx cap add android`, puis colle tes fichiers
+personnalisés (android-overrides/) par-dessus. Ça évite tout conflit avec les
+fichiers que Capacitor régénère (gradlew, wrapper, etc.).
+
+## Étapes
+
+1. Mets `index.html` à la racine du repo.
+2. Fais `npm install` une fois en local (ou laisse le workflow le faire).
+3. Suis KEYSTORE.md pour générer ta clé de signature et ajouter les 4 secrets
+   GitHub (NPS_KEYSTORE_BASE64, NPS_KEYSTORE_PASSWORD, NPS_KEY_ALIAS, NPS_KEY_PASSWORD).
+4. Pousse un tag `v1.0.0` (ou lance le workflow manuellement depuis l'onglet
+   Actions) → l'APK signé sort en artifact ET en GitHub Release.
+
+## Ce qui est déjà géré automatiquement par le workflow
+
+- Génération du projet Android complet (gradlew inclus) via Capacitor
+- Application de l'AndroidManifest avec tous les intent-filters "Ouvrir avec"
+  (images, vidéos, texte, et extensions de code courantes)
+- Génération de toutes les tailles d'icônes + icône adaptative + splash screen
+  à partir de resources/icon.png et resources/splash.png
+- Signature release à partir de tes secrets (rien en clair dans le repo)
+- minify + shrinkResources activés pour une APK plus légère
+- ProGuard configuré pour ne jamais casser le pont Capacitor/WebView
+
+
+---
+
+Fichier : package.json
+Contenu :
+{
+  "name": "nps-viewer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NPS Viewer - visionneuse/exécuteur universel - BY NPS.NELSON",
+  "scripts": {
+    "assets": "capacitor-assets generate --android",
+    "sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.1.2"
+  }
+}
+
+
+---
+
+Fichier : index-37.html
+Contenu :
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>NPS Viewer</title>
+<link id="hlTheme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root{ --bg:#000; --accent:#7DFCFF; --accent2:#A78BFA; --dim:rgba(232,227,245,0.62); }
+  *{margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  html,body{ width:100%; height:100%; background:var(--bg); overflow:hidden; }
+  #stage{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:var(--bg); }
+
+  /* ---- État vide : logo + BY NPS.NELSON, discret mais bien visible ---- */
+  #empty{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; opacity:.6; transition:opacity .4s; }
+  #empty .mark{ width:96px; height:96px; }
+  #empty .brand{ margin-top:14px; font-family:'Space Grotesk', sans-serif; font-size:11px; letter-spacing:3px; color:var(--dim); }
+
+  #imgView{ display:none; width:100%; height:100%; object-fit:contain; }
+  #vidView{ display:none; width:100%; height:100%; object-fit:contain; background:#000; }
+  #frameView{ display:none; width:100%; height:100%; border:0; background:#fff; }
+  #codeWrap{ display:none; width:100%; height:100%; overflow:auto; background:#0b0b0f; -webkit-overflow-scrolling:touch; }
+  #codeWrap pre{ margin:0; min-height:100%; }
+  #codeWrap code{ display:block; padding:64px 16px 40px; font-size:13.5px; line-height:1.55; font-family:'JetBrains Mono', ui-monospace, monospace; white-space:pre; }
+
+  /* ---- Seul bouton toujours visible : le hamburger, déplaçable ---- */
+  #menuBtn{
+    position:fixed; top:14px; left:14px; z-index:60; width:42px; height:42px; border-radius:12px;
+    background:rgba(20,20,26,0.65); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.1);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; touch-action:none;
+    transition:opacity .25s, transform .12s, box-shadow .2s;
+  }
+  #menuBtn:active{ transform:scale(0.92); }
+  #menuBtn svg{ width:20px; height:20px; stroke:#E8E3F5; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .chrome-hidden #menuBtn{ opacity:0 !important; pointer-events:none; }
+
+  /* ---- Panneau d'actions révélé par le hamburger : Import / Paramètres / Retour ---- */
+  #actionPanel{
+    position:fixed; top:0; left:0; height:100%; width:76px; z-index:59;
+    background:rgba(10,10,14,0.88); backdrop-filter:blur(14px);
+    display:flex; flex-direction:column; align-items:center; padding-top:calc(env(safe-area-inset-top,0) + 68px);
+    gap:16px; transform:translateX(-100%); transition:transform .28s cubic-bezier(.2,.9,.3,1);
+    border-right:1px solid rgba(255,255,255,0.06);
+  }
+  #actionPanel.open{ transform:translateX(0); }
+  .panelBtn{
+    width:52px; height:52px; border-radius:16px; background:rgba(255,255,255,0.07);
+    border:1px solid rgba(125,252,255,0.3); display:flex; align-items:center; justify-content:center; cursor:pointer;
+    opacity:1;
+  }
+  .panelBtn svg{ width:24px; height:24px; stroke:var(--accent); fill:none; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; }
+  #backBtn.panelBtn{ border-color:rgba(255,255,255,0.5); }
+  #backBtn.panelBtn svg{ stroke:#FFFFFF; }
+  #backBtn.panelBtn.active{ border-color:var(--accent); box-shadow:0 0 12px rgba(125,252,255,0.5); }
+
+  /* ---- Panneau paramètres (glisse depuis la droite) ---- */
+  #settingsPanel{
+    position:fixed; top:0; right:0; height:100%; width:230px; z-index:60;
+    background:rgba(10,10,14,0.92); backdrop-filter:blur(16px);
+    padding:calc(env(safe-area-inset-top,0) + 70px) 16px 20px;
+    transform:translateX(100%); transition:transform .28s cubic-bezie
+... (tronqué, 21430 caractères au total)
+
+---
+
+Fichier : KEYSTORE.md
+Contenu :
+# Signature release — à faire UNE SEULE FOIS
+
+Un APK release doit être signé avec ta propre clé (jamais celle de debug).
+Sans ça, ni le Play Store ni les mises à jour ne fonctionneront correctement.
+
+## 1) Générer le keystore (une fois, garde-le précieusement, jamais dans le repo)
+
+Depuis Termux (keytool vient avec le JDK) :
+
+  keytool -genkeypair -v \
+    -keystore nps-viewer-release.keystore \
+    -alias nps_viewer \
+    -keyalg RSA -keysize 2048 -validity 10000
+
+Il va te demander un mot de passe pour le keystore, un mot de passe pour la
+clé (peut être le même), et quelques infos (nom, organisation...).
+
+⚠️ Si tu perds ce fichier ou son mot de passe, tu ne pourras plus jamais
+publier de mise à jour sous le même applicationId. Sauvegarde-le ailleurs
+(Drive, mail à toi-même, etc.), en dehors du repo Git.
+
+## 2) Encoder le keystore en base64
+
+  base64 -w 0 nps-viewer-release.keystore > keystore.b64
+
+## 3) Ajouter les secrets dans GitHub
+
+Repo → Settings → Secrets and variables → Actions → New repository secret :
+
+  NPS_KEYSTORE_BASE64    -> contenu de keystore.b64
+  NPS_KEYSTORE_PASSWORD  -> mot de passe du keystore
+  NPS_KEY_ALIAS          -> nps_viewer
+  NPS_KEY_PASSWORD       -> mot de passe de la clé
+
+Le workflow release-apk.yml décode automatiquement NPS_KEYSTORE_BASE64 en
+fichier .keystore à chaque run, et passe les autres valeurs à Gradle via des
+variables d'environnement (NPS_KEYSTORE_PATH, NPS_KEYSTORE_PASSWORD,
+NPS_KEY_ALIAS, NPS_KEY_PASSWORD) — c'est ce que lit app/build.gradle.
+
+Rien de sensible n'est jamais écrit en clair dans le repo.
+
+
+---
+
+Fichier : capacitor.config.json
+Contenu :
+{
+  "appId": "com.nps.viewer",
+  "appName": "NPS Viewer",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "launchAutoHide": true,
+      "backgroundColor": "#050308",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    }
+  }
+}
+
+
+---
+
+Fichier : resources/icon.png (binaire, non affiché)
+
+---
+
+Fichier : resources/README.txt
+Contenu :
+Place ici (à la racine du repo, dans /resources) :
+
+  resources/icon.png    -> copie de icon-1024.png (1024x1024, déjà généré)
+  resources/splash.png  -> une version CARRÉE 2732x2732 du logo sur fond #050308
+                            (le splash-1080x1920.png déjà généré est rectangulaire ;
+                            @capacitor/assets attend un carré qu'il recadre lui-même
+                            pour toutes les densités et orientations)
+
+Une fois ces deux fichiers en place, la commande suivante génère TOUTES les
+tailles Android (mipmap-*, drawable splash, icône adaptative) automatiquement :
+
+  npx @capacitor/assets generate --android
+
+C'est exactement ce que fait le job GitHub Actions fourni (release-apk.yml) —
+tu n'as rien à faire à la main, juste committer resources/icon.png et
+resources/splash.png dans le repo.
+
+
+---
+
+Fichier : resources/splash.png (binaire, non affiché)
+
+---
+
+Fichier : android-overrides/build.gradle
+Contenu :
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.5.2'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+
+---
+
+Fichier : android-overrides/gradle.properties
+Contenu :
+org.gradle.jvmargs=-Xmx2048m
+android.useAndroidX=true
+android.enableJetifier=true
+
+
+---
+
+Fichier : android-overrides/app/build.gradle
+Contenu :
+apply plugin: 'com.android.application'
+
+android {
+    namespace "com.nps.viewer"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.nps.viewer"
+        minSdkVersion 23
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0.0"
+        multiDexEnabled true
+    }
+
+    /*
+      Signature release : aucune valeur en dur dans le repo.
+      Tout vient de variables d'environnement injectées par le workflow
+      GitHub Actions à partir de secrets (voir release-apk.yml + KEYSTORE.md).
+    */
+    signingConfigs {
+        release {
+            if (System.getenv("NPS_KEYSTORE_PATH")) {
+                storeFile file(System.getenv("NPS_KEYSTORE_PATH"))
+                storePassword System.getenv("NPS_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("NPS_KEY_ALIAS")
+                keyPassword System.getenv("NPS_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "androidx.core:core-splashscreen:1.0.1"
+    implementation project(':capacitor-android')
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+
+---
+
+Fichier : android-overrides/app/proguard-rules.pro (binaire, non affiché)
+
+---
+
+Fichier : android-overrides/app/src/main/AndroidManifest.xml
+Contenu :
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        android:usesCleartextTraffic="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- ============ Ouvrir avec : images ============ -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <!-- ============ Ouvrir avec : vidéos ============ -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+
+            <!-- ============ Ouvrir avec : texte / HTML ============ -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+
+            <!-- ============ Ouvrir avec : fichiers sans type reconnu (la plupart des fichiers de code) ============ -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+
+            <!-- ============ Extensions de code courantes (un filtre par extension : plus verbeux mais fiable sur toutes les versions d'Android) ============ -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.js" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.ts" />
+            </intent-filter>
+            <intent-filter>
+
+... (tronqué, 12151 caractères au total)
+
+---
+
+Fichier : android-overrides/app/src/main/java/com/nps/viewer/MainActivity.java
+Contenu :
+package com.nps.viewer;
+
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.webkit.MimeTypeMap;
+import com.getcapacitor.BridgeActivity;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+
+/*
+  Reçoit le fichier ouvert via "Ouvrir avec" (ACTION_VIEW), le copie en flux
+  (jamais tout en mémoire, donc pas de plantage même sur plusieurs gigaoctets)
+  dans le cache de l'app, puis appelle window.npsOpenNativeFile(url, nom, mime)
+  dans index.html via Capacitor.convertFileSrc().
+*/
+public class MainActivity extends BridgeActivity {
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    handleIncomingIntent(getIntent());
+  }
+
+  @Override
+  protected void onNewIntent(Intent intent) {
+    super.onNewIntent(intent);
+    setIntent(intent);
+    handleIncomingIntent(intent);
+  }
+
+  private void handleIncomingIntent(Intent intent) {
+    if (intent == null) return;
+    String action = intent.getAction();
+    Uri uri = intent.getData();
+    if (!Intent.ACTION_VIEW.equals(action) || uri == null) return;
+
+    new Thread(() -> {
+      try {
+        String name = queryDisplayName(uri);
+        String mime = getContentResolver().getType(uri);
+        if (mime == null) mime = guessMimeFromName(name);
+
+        File outFile = new File(getCacheDir(), "npsviewer_" + System.currentTimeMillis() + "_" + name);
+        try (InputStream in = getContentResolver().openInputStream(uri);
+             FileOutputStream out = new FileOutputStream(outFile)) {
+          byte[] buf = new byte[8192];
+          int n;
+          while (in != null && (n = in.read(buf)) != -1) out.write(buf, 0, n);
+        }
+
+        final String finalName = name;
+        final String finalMime = mime;
+        final String path = outFile.getAbsolutePath();
+
+        runOnUiThread(() -> {
+          String js = "window.npsOpenNativeFile(Capacitor.convertFileSrc('" + path.replace("'", "\\'") + "'), '"
+              + finalName.replace("'", "\\'") + "', '" + finalMime + "');";
+          getBridge().getWebView().evaluateJavascript(js, null);
+        });
+
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }).start();
+  }
+
+  private String queryDisplayName(Uri uri) {
+    String result = "fichier";
+    try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+      if (cursor != null && cursor.moveToFirst()) {
+        int idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+        if (idx != -1) result = cursor.getString(idx);
+      }
+    } catch (Exception ignored) {}
+    return result;
+  }
+
+  private String guessMimeFromName(String name) {
+    String ext = MimeTypeMap.getFileExtensionFromUrl(name);
+    if (ext == null) return "application/octet-stream";
+    String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext.toLowerCase());
+    return mime != null ? mime : "application/octet-stream";
+  }
+}
+
+
+---
+
+Fichier : android-overrides/app/src/main/res/xml/file_paths.xml
+Contenu :
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="nps_cache" path="." />
+    <external-cache-path name="nps_external_cache" path="." />
+</paths>
+
+
+---
+
+Fichier : android-overrides/app/src/main/res/values/styles.xml
+Contenu :
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:background">@android:color/black</item>
+        <item name="colorPrimary">#7DFCFF</item>
+        <item name="colorPrimaryDark">#050308</item>
+        <item name="colorAccent">#A78BFA</item>
+    </style>
+
+    <!-- Thème affiché pendant le tout premier instant du lancement, avant que
+         le plugin SplashScreen prenne le relais avec splash.png -->
+    <style name="AppTheme.NoActionBarLaunch" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/splash</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:statusBarColor">#050308</item>
+        <item name="android:navigationBarColor">#050308</item>
+    </style>
+</resources>
