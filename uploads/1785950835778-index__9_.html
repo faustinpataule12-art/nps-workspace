@@ -1,0 +1,429 @@
+[Contenu du fichier "index (9).html"] :
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mini Football Match</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+        body {
+            background-color: #0c141f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            max-height: 850px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            overflow: hidden;
+            background: #2e8b57;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="fieldCanvas"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById('fieldCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Adapter la taille du canvas
+    function resizeCanvas() {
+        canvas.width = 450;
+        canvas.height = 800;
+    }
+    resizeCanvas();
+
+    // État du jeu
+    let scoreTeam1 = 0; // Bilbao (IA)
+    let scoreTeam2 = 0; // Real Madrid (Joueur)
+    let seconds = 32;
+    let halfTime = "Primera mitad";
+    let goalAnimationTimer = 0;
+    let goalText = "GOOAL!";
+
+    // Ballon
+    const ball = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        vx: 0,
+        vy: 0,
+        radius: 12,
+        speedDecay: 0.985
+    };
+
+    // Équipe 1 (IA - Bilbao en haut)
+    const aiTeam = {
+        x: canvas.width / 2,
+        y: 200,
+        radius: 25,
+        speed: 2.5
+    };
+
+    // Équipe 2 (Joueur - Real Madrid en bas)
+    const playerTeam = {
+        x: canvas.width / 2,
+        y: 600,
+        radius: 25,
+        isDragging: false
+    };
+
+    // Confettis pour la célébration
+    let confetti = [];
+    function triggerConfetti() {
+        confetti = [];
+        for (let i = 0; i < 80; i++) {
+            confetti.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                vx: (Math.random() - 0.5) * 6,
+                vy: Math.random() * 4 + 2,
+                size: Math.random() * 10 + 5,
+                color: ['#ff4757', '#2ed573', '#ffa502', '#1e90ff', '#ffffff'][Math.floor(Math.random() * 5)],
+                rotation: Math.random() * 360,
+                vRot: (Math.random() - 0.5) * 10
+            });
+        }
+        goalAnimationTimer = 120; // durcissement de l'anim (frames)
+    }
+
+    // Gestion du tactile et de la souris pour déplacer le joueur
+    function getTouchPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+    }
+
+    window.addEventListener('mousedown', (e) => {
+        const pos = getTouchPos(e);
+        const dist = Math.hypot(pos.x - playerTeam.x, pos.y - playerTeam.y);
+        if (dist < playerTeam.radius + 20) {
+            playerTeam.isDragging = true;
+        }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!playerTeam.isDragging) return;
+        const pos = getTouchPos(e);
+        playerTeam.x = Math.max(playerTeam.radius + 25, Math.min(canvas.width - playerTeam.radius - 25, pos.x));
+        playerTeam.y = Math.max(canvas.height / 2 + 30, Math.min(canvas.height - playerTeam.radius - 20, pos.y));
+    });
+
+    window.addEventListener('mouseup', () => { playerTeam.isDragging = false; });
+
+    // Tactile mobile
+    window.addEventListener('touchstart', (e) => {
+        const pos = getTouchPos(e);
+        const dist = Math.hypot(pos.x - playerTeam.x, pos.y - playerTeam.y);
+        if (dist < playerTeam.radius + 30) {
+            playerTeam.isDragging = true;
+        }
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        if (!playerTeam.isDragging) return;
+        const pos = getTouchPos(e);
+        playerTeam.x = Math.max(playerTeam.radius + 25, Math.min(canvas.width - playerTeam.radius - 25, pos.x));
+        playerTeam.y = Math.max(canvas.height / 2 + 30, Math.min(canvas.height - playerTeam.radius - 20, pos.y));
+    });
+
+    window.addEventListener('touchend', () => { playerTeam.isDragging = false; });
+
+    // Chronomètre du match
+    setInterval(() => {
+        if (goalAnimationTimer === 0) {
+            seconds++;
+        }
+    }, 1000);
+
+    // Dessin du terrain de foot
+    function drawField() {
+        // Bandes de pelouse alternées
+        const stripeHeight = 40;
+        ctx.fillStyle = '#228B22';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        for (let y = 0; y < canvas.height; y += stripeHeight * 2) {
+            ctx.fillStyle = '#1e7b1e';
+            ctx.fillRect(0, y, canvas.width, stripeHeight);
+        }
+
+        // Lignes blanches
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 3;
+
+        // Contour du terrain
+        ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+        // Ligne médiane
+        ctx.beginPath();
+        ctx.moveTo(20, canvas.height / 2);
+        ctx.lineTo(canvas.width - 20, canvas.height / 2);
+        ctx.stroke();
+
+        // Cercle central
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, 60, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Point central
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Surface de réparation haut
+        ctx.strokeRect(canvas.width / 2 - 90, 20, 180, 100);
+        ctx.strokeRect(canvas.width / 2 - 40, 20, 80, 40);
+
+        // Surface de réparation bas
+        ctx.strokeRect(canvas.width / 2 - 90, canvas.height - 120, 180, 100);
+        ctx.strokeRect(canvas.width / 2 - 40, canvas.height - 60, 80, 40);
+
+        // Buts
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillRect(canvas.width / 2 - 50, 5, 100, 15);
+        ctx.fillRect(canvas.width / 2 - 50, canvas.height - 20, 100, 15);
+    }
+
+    // Dessin des badges des équipes
+    function drawTeamBadge(x, y, radius, type) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        ctx.fillStyle = type === 'bilbao' ? '#ffffff' : '#f0f0f0';
+        ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+
+        // Simulation visuelle simplifiée des logos
+        ctx.lineWidth = 3;
+        if (type === 'bilbao') {
+            // Style Bilbao (Rayures rouges et blanches)
+            ctx.fillStyle = '#d32f2f';
+            ctx.fillRect(x - radius, y - radius, radius * 0.6, radius * 2);
+            ctx.fillRect(x - radius * 0.2, y - radius, radius * 0.6, radius * 2);
+            ctx.strokeStyle = '#000';
+            ctx.stroke();
+        } else {
+            // Style Real Madrid (Cercle avec couronne/croix stylisée)
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.strokeStyle = '#cca750';
+            ctx.stroke();
+            ctx.fillStyle = '#003366';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('RM', x, y);
+        }
+        ctx.restore();
+
+        // Contour doré/blanc du badge
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+    }
+
+    // Dessin du ballon de foot
+    function drawBall(x, y, r) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#111';
+        ctx.stroke();
+        ctx.closePath();
+        ctx.restore();
+    }
+
+    // Affichage des scores et du chrono sur le côté
+    function drawUI() {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px "Courier New"';
+        ctx.textAlign = 'left';
+
+        // Score Bilbao (Haut)
+        ctx.fillText(scoreTeam1, 35, canvas.height / 2 - 40);
+        // Score Real Madrid (Bas)
+        ctx.fillText(scoreTeam2, 35, canvas.height / 2 + 65);
+
+        // Infos match droite
+        ctx.font = 'bold 16px "Courier New"';
+        ctx.textAlign = 'right';
+        ctx.fillText(halfTime, canvas.width - 25, canvas.height / 2 - 45);
+        ctx.fillText(seconds + 's', canvas.width - 25, canvas.height / 2 + 45);
+    }
+
+    // Boucle de mise à jour physique et IA
+    function update() {
+        if (goalAnimationTimer > 0) {
+            goalAnimationTimer--;
+            return; // Pause pendant la célébration
+        }
+
+        // IA de l'équipe adverse (Bilbao suit le ballon en hauteur)
+        if (ball.y < canvas.height / 2) {
+            if (aiTeam.x < ball.x) aiTeam.x += aiTeam.speed;
+            if (aiTeam.x > ball.x) aiTeam.x -= aiTeam.speed;
+            if (aiTeam.y < ball.y) aiTeam.y += aiTeam.speed;
+            if (aiTeam.y > ball.y) aiTeam.y -= aiTeam.speed;
+        } else {
+            // Retour en position défensive
+            if (aiTeam.x < canvas.width / 2) aiTeam.x += aiTeam.speed * 0.5;
+            if (aiTeam.x > canvas.width / 2) aiTeam.x -= aiTeam.speed * 0.5;
+            if (aiTeam.y > 180) aiTeam.y -= aiTeam.speed * 0.5;
+        }
+
+        // Mouvement du ballon
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+        ball.vx *= ball.speedDecay;
+        ball.vy *= ball.speedDecay;
+
+        // Rebonds sur les bords du terrain
+        if (ball.x - ball.radius < 20) { ball.x = 20 + ball.radius; ball.vx *= -0.8; }
+        if (ball.x + ball.radius > canvas.width - 20) { ball.x = canvas.width - 20 - ball.radius; ball.vx *= -0.8; }
+
+        // Vérification des buts
+        if (ball.y < 25) {
+            if (ball.x > canvas.width / 2 - 50 && ball.x < canvas.width / 2 + 50) {
+                // BUT pour le Joueur (Real Madrid) !
+                scoreTeam2++;
+                triggerConfetti();
+                resetBall();
+                return;
+            } else {
+                ball.y = 25;
+                ball.vy *= -0.8;
+            }
+        }
+
+        if (ball.y > canvas.height - 25) {
+            if (ball.x > canvas.width / 2 - 50 && ball.x < canvas.width / 2 + 50) {
+                // BUT pour l'IA (Bilbao) !
+                scoreTeam1++;
+                triggerConfetti();
+                resetBall();
+                return;
+            } else {
+                ball.y = canvas.height - 25;
+                ball.vy *= -0.8;
+            }
+        }
+
+        // Collisions entre les équipes et le ballon
+        checkCollision(aiTeam);
+        checkCollision(playerTeam);
+    }
+
+    function checkCollision(entity) {
+        const dx = ball.x - entity.x;
+        const dy = ball.y - entity.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = ball.radius + entity.radius;
+
+        if (dist < minDist) {
+            const angle = Math.atan2(dy, dx);
+            const hitSpeed = entity.isDragging ? 8 : 4; 
+            ball.vx = Math.cos(angle) * (hitSpeed + Math.abs(ball.vx));
+            ball.vy = Math.sin(angle) * (hitSpeed + Math.abs(ball.vy));
+            
+            // Séparer les objets pour éviter qu'ils restent collés
+            ball.x = entity.x + Math.cos(angle) * minDist;
+            ball.y = entity.y + Math.sin(angle) * minDist;
+        }
+    }
+
+    function resetBall() {
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height / 2;
+        ball.vx = 0;
+        ball.vy = 0;
+        playerTeam.x = canvas.width / 2;
+        playerTeam.y = 600;
+        aiTeam.x = canvas.width / 2;
+        aiTeam.y = 200;
+    }
+
+    // Affichage des animations de célébration
+    function drawCelebration() {
+        if (goalAnimationTimer > 0) {
+            // Confettis
+            confetti.forEach(c => {
+                c.x += c.vx;
+                c.y += c.vy;
+                c.rotation += c.vRot;
+                ctx.save();
+                ctx.translate(c.x, c.y);
+                ctx.rotate(c.rotation * Math.PI / 180);
+                ctx.fillStyle = c.color;
+                ctx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size * 0.6);
+                ctx.restore();
+            });
+
+            // Texte GOOAL! fluorescent
+            ctx.save();
+            ctx.font = 'bold 52px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#00ffcc';
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = '#ffff00';
+            ctx.fillText(goalText, canvas.width / 2, canvas.height / 2);
+            ctx.restore();
+        }
+    }
+
+    // Boucle principale du jeu
+    function gameLoop() {
+        update();
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawField();
+        drawUI();
+
+        drawTeamBadge(aiTeam.x, aiTeam.y, aiTeam.radius, 'bilbao');
+        drawTeamBadge(playerTeam.x, playerTeam.y, playerTeam.radius, 'real');
+        drawBall(ball.x, ball.y, ball.radius);
+
+        drawCelebration();
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+</script>
+
+</body>
+</html>
