@@ -1,0 +1,1253 @@
+[Contenu du fichier "mini-football-cup-1-3 (1).html"] :
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mini Football Cup</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #0c141f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            height: 100dvh;
+            max-height: 850px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            overflow: hidden;
+            background: linear-gradient(135deg, #1b4d3e, #0c2b22);
+        }
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #ffffff;
+            text-align: center;
+            z-index: 10;
+        }
+        .hidden { display: none !important; }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 16px;
+            color: #ffd700;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            letter-spacing: 1px;
+        }
+        .btn {
+            background: linear-gradient(to bottom, #2ed573, #26af5f);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 17px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4);
+            margin: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            transition: transform 0.1s;
+            width: 240px;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-secondary {
+            background: linear-gradient(to bottom, #3742fa, #2f3542);
+            box-shadow: 0 5px 15px rgba(55, 66, 250, 0.4);
+        }
+        .btn-gold {
+            background: linear-gradient(to bottom, #ffd700, #c9a300);
+            color: #1a1200;
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+        }
+        .btn:disabled { opacity: 0.35; cursor: default; box-shadow: none; }
+
+        /* ---------- HOME ---------- */
+        #home-screen {
+            background:
+                radial-gradient(ellipse at center, rgba(46,213,115,0.15) 0%, rgba(12,20,31,0.97) 70%),
+                repeating-linear-gradient(0deg, #163021, #163021 40px, #14291d 40px, #14291d 80px);
+        }
+        .home-badge {
+            width: 110px; height: 110px; border-radius: 50%;
+            border: 4px solid #ffd700;
+            box-shadow: 0 0 25px rgba(255,215,0,0.5), inset 0 0 15px rgba(0,0,0,0.4);
+            margin-bottom: 10px;
+            display:flex; align-items:center; justify-content:center;
+            background: radial-gradient(circle at 35% 30%, #2ed573, #0c2b1c);
+        }
+        #home-screen h1 { font-size: 28px; }
+        .home-sub { font-size: 12px; color: #9fd8b8; margin-bottom: 22px; letter-spacing: 2px; }
+
+        /* ---------- TEAM SELECT ---------- */
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 15px 0;
+            max-height: 350px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .team-card {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: transform 0.15s, border-color 0.15s;
+            overflow: hidden;
+            background: #fff;
+            color: #000;
+            position: relative;
+        }
+        .team-card.selected { border-color: #ffd700; transform: scale(1.12); }
+
+        .settings-group { margin: 15px 0; width: 80%; text-align: left; }
+        .settings-group label { display: block; margin-bottom: 5px; font-size: 14px; }
+        .settings-group input { width: 100%; accent-color: #2ed573; }
+
+        /* ---------- BRACKET ---------- */
+        #bracket-screen { justify-content: flex-start; padding-top: 14px; }
+        #bracketStatus { font-size: 13px; color: #ffd700; min-height: 18px; margin-bottom: 6px; }
+        #bracketContainer {
+            display: flex;
+            flex-direction: row;
+            gap: 14px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            width: 100%;
+            padding: 6px 4px 14px 4px;
+            flex: 1;
+        }
+        .bracket-round { display:flex; flex-direction:column; gap:10px; min-width: 128px; }
+        .round-title { font-size: 11px; color:#9fd8b8; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px; text-align:center;}
+        .match-row {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 5px 6px;
+        }
+        .team-slot {
+            display:flex; align-items:center; gap:5px;
+            font-size: 10px; padding: 2px 0; color:#e6e6e6;
+        }
+        .team-slot canvas { flex-shrink:0; border-radius:50%; }
+        .team-slot span { flex: 1; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .team-slot b { color:#ffd700; }
+        .team-slot.is-player { color:#2ed573; font-weight:bold; }
+        .team-slot.eliminated { opacity:0.4; text-decoration: line-through; }
+
+        /* ---------- MATCH OVERLAY (remplace les popups natives) ---------- */
+        .match-overlay {
+            position: absolute; inset: 0;
+            background: rgba(5,10,15,0.85);
+            display:flex; align-items:center; justify-content:center;
+            z-index: 60;
+        }
+        .overlay-box {
+            background: linear-gradient(160deg, #142a20, #0c1a13);
+            border: 2px solid #ffd700;
+            border-radius: 16px;
+            padding: 26px 22px;
+            text-align: center;
+            width: 82%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+        .overlay-box h2 { color:#ffd700; font-size:20px; margin-bottom:10px; }
+        .overlay-box p { color:#fff; font-size:14px; margin-bottom:16px; line-height:1.5; }
+
+        canvas#fieldCanvas { display: block; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+
+    <!-- ÉCRAN D'ACCUEIL -->
+    <div id="home-screen" class="screen">
+        <div class="home-badge">⚽</div>
+        <h1>MINI FOOTBALL CUP</h1>
+        <div class="home-sub">COMPÉTITION À ÉLIMINATION</div>
+        <button class="btn" onclick="goToStartScreen()">▶ COMMENCER</button>
+        <button class="btn btn-secondary" onclick="goToSettings()">⚙️ PARAMÈTRES</button>
+    </div>
+
+    <!-- ÉCRAN COMMENCER (choix nouveau tournoi / continuer) -->
+    <div id="start-screen" class="screen hidden">
+        <h1 style="font-size:22px;">COMMENCER</h1>
+        <button class="btn btn-gold hidden" id="continue-btn" onclick="onContinuePressed()">▶ CONTINUER</button>
+        <button class="btn" onclick="onNewTournamentPressed()">🏆 NOUVEAU TOURNOI</button>
+        <button class="btn btn-secondary" onclick="goToHome()">RETOUR</button>
+    </div>
+
+    <!-- ÉCRAN PARAMÈTRES -->
+    <div id="settings-screen" class="screen hidden">
+        <h1>PARAMÈTRES</h1>
+        <div class="settings-group">
+            <label id="ball-speed-label">Vitesse du ballon : Normale</label>
+            <input type="range" id="ballSpeedRange" min="1" max="3" step="0.5" value="1.5" oninput="updateSettings()">
+        </div>
+        <div class="settings-group">
+            <label id="ai-speed-label">Difficulté IA : Normale</label>
+            <input type="range" id="aiSpeedRange" min="1" max="3" step="0.5" value="2.5" oninput="updateSettings()">
+        </div>
+        <div class="settings-group">
+            <label id="sound-label">🔊 Son : Activé</label>
+            <input type="range" id="soundRange" min="0" max="1" step="1" value="1" oninput="updateSettings()">
+        </div>
+        <button class="btn btn-gold" onclick="onSharePressed()">🔗 PARTAGER L'APPLICATION</button>
+        <button class="btn" onclick="goToHome()">RETOUR</button>
+    </div>
+
+    <!-- ÉCRAN SÉLECTION DES ÉQUIPES (nouveau tournoi uniquement) -->
+    <div id="team-screen" class="screen hidden">
+        <h1>CHOISIS TON ÉQUIPE</h1>
+        <div class="teams-grid" id="teamsGrid"></div>
+        <button class="btn" onclick="confirmTeamAndCreateTournament()">CONFIRMER !</button>
+        <button class="btn btn-secondary" style="font-size: 14px; padding: 10px 20px; width:auto;" onclick="goToHome()">RETOUR</button>
+    </div>
+
+    <!-- ÉCRAN TABLEAU DU TOURNOI -->
+    <div id="bracket-screen" class="screen hidden">
+        <h1 style="font-size:20px;">TABLEAU DE LA COUPE</h1>
+        <div id="bracketStatus"></div>
+        <div id="bracketContainer"></div>
+        <button class="btn" id="bracketActionBtn" onclick="onBracketAction()">JOUER MON MATCH</button>
+        <button class="btn btn-secondary" style="font-size: 13px; padding: 8px 18px; width:auto;" onclick="goToHome()">MENU</button>
+    </div>
+
+    <!-- CANVAS DU JEU -->
+    <canvas id="fieldCanvas" class="hidden"></canvas>
+
+    <!-- BOUTON PAUSE (pendant le match) -->
+    <button id="pause-btn" class="hidden" onclick="openPauseOverlay()" style="position:absolute; top:14px; right:14px; z-index:55; width:44px; height:44px; border-radius:50%; background:#ffffff; border:3px solid #0c141f; box-shadow:0 3px 10px rgba(0,0,0,0.5); font-size:18px; cursor:pointer;">⏸</button>
+
+    <!-- OVERLAY PAUSE -->
+    <div id="pause-overlay" class="match-overlay hidden">
+        <div class="overlay-box">
+            <h2>⏸ PAUSE</h2>
+            <p id="pause-score-text" style="font-size:20px; margin:10px 0;"></p>
+            <button class="btn" onclick="closePauseOverlay()">▶ REPRENDRE</button>
+            <button class="btn btn-secondary" id="pause-mute-btn" onclick="toggleMuteFromPause()"></button>
+            <button class="btn btn-secondary" onclick="closePauseOverlay(); goToHome();">MENU</button>
+        </div>
+    </div>
+
+    <!-- OVERLAY DE MATCH (mi-temps / fin de match) -->
+    <div id="match-overlay" class="match-overlay hidden">
+        <div class="overlay-box">
+            <h2 id="overlay-title"></h2>
+            <p id="overlay-text"></p>
+            <button class="btn" id="overlay-btn"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ============================================================
+       DONNÉES ÉQUIPES
+    ============================================================ */
+    const teams = [
+        { id: 'bar', name: 'Barcelone', type: 'barca' },
+        { id: 'rma', name: 'Real Madrid', type: 'real' },
+        { id: 'ray', name: 'Vallecano', type: 'rayo' },
+        { id: 'mal', name: 'Mallorca', type: 'mallorca' },
+        { id: 'bet', name: 'Real Betis', type: 'betis' },
+        { id: 'esp', name: 'Espanyol', type: 'espanyol' },
+        { id: 'osa', name: 'Osasuna', type: 'osasuna' },
+        { id: 'atm', name: 'Atlético', type: 'atletico' },
+        { id: 'bil', name: 'Bilbao', type: 'bilbao' },
+        { id: 'val', name: 'Valencia', type: 'valencia' },
+        { id: 'sev', name: 'Sevilla', type: 'sevilla' },
+        { id: 'vil', name: 'Villarreal', type: 'villarreal' },
+        { id: 'rso', name: 'Sociedad', type: 'sociedad' },
+        { id: 'cel', name: 'Celta', type: 'celta' },
+        { id: 'get', name: 'Getafe', type: 'getafe' },
+        { id: 'alm', name: 'Almería', type: 'almeria' },
+        { id: 'zar', name: 'Real Saragosse', type: 'zaragoza' },
+        { id: 'dep', name: 'Deportivo La Corogne', type: 'deportivo' },
+        { id: 'vll', name: 'Real Valladolid', type: 'valladolid' },
+        { id: 'rac', name: 'Racing Santander', type: 'racing' },
+        { id: 'spo', name: 'Sporting Gijón', type: 'sporting' },
+        { id: 'ovi', name: 'Real Oviedo', type: 'oviedo' },
+        { id: 'lpa', name: 'Las Palmas', type: 'laspalmas' },
+        { id: 'gra', name: 'Granada', type: 'granada' },
+        { id: 'mgf', name: 'Málaga CF', type: 'malagacf' },
+        { id: 'ala', name: 'Alavés', type: 'alaves' },
+        { id: 'elx', name: 'Elche', type: 'elche' },
+        { id: 'lev', name: 'Levante', type: 'levante' },
+        { id: 'cdm', name: 'CD Málaga (ancien)', type: 'cdmalaga' },
+        { id: 'her', name: 'Hércules', type: 'hercules' },
+        { id: 'tfe', name: 'Tenerife', type: 'tenerife' },
+        { id: 'cad', name: 'Cádiz', type: 'cadiz' },
+        { id: 'mur', name: 'Real Murcia', type: 'murcia' },
+        { id: 'sal', name: 'Salamanca', type: 'salamanca' },
+        { id: 'sab', name: 'Sabadell', type: 'sabadell' },
+        { id: 'eib', name: 'Eibar', type: 'eibar' },
+        { id: 'log', name: 'Logroñés', type: 'logrones' },
+        { id: 'cas', name: 'Castellón', type: 'castellon' },
+        { id: 'gir', name: 'Girona', type: 'girona' },
+        { id: 'abz', name: 'Albacete', type: 'albacete' },
+        { id: 'cor', name: 'Córdoba', type: 'cordoba' },
+        { id: 'leg', name: 'Leganés', type: 'leganes' },
+        { id: 'com', name: 'Compostela', type: 'compostela' },
+        { id: 'rec', name: 'Recreativo', type: 'recreativo' },
+        { id: 'bur', name: 'Burgos CF', type: 'burgos' },
+        { id: 'pon', name: 'Pontevedra', type: 'pontevedra' },
+        { id: 'num', name: 'Numancia', type: 'numancia' },
+        { id: 'are', name: 'Arenas', type: 'arenas' },
+        { id: 'rbu', name: 'Real Burgos', type: 'realburgos' },
+        { id: 'gim', name: 'Gimnàstic', type: 'gimnastic' },
+        { id: 'ext', name: 'Extremadura', type: 'extremadura' },
+        { id: 'mer', name: 'Mérida', type: 'merida' },
+        { id: 'alc', name: 'Alcoyano', type: 'alcoyano' },
+        { id: 'jae', name: 'Jaén', type: 'jaen' },
+        { id: 'hue', name: 'Huesca', type: 'huesca' },
+        { id: 'run', name: 'Real Unión', type: 'realunion' },
+        { id: 'ada', name: 'AD Almería (ancien)', type: 'adalmeria' },
+        { id: 'eur', name: 'Europa', type: 'europa' },
+        { id: 'lle', name: 'UE Lleida', type: 'lleida' },
+        { id: 'xer', name: 'Xerez', type: 'xerez' },
+        { id: 'cnd', name: 'Condal', type: 'condal' },
+        { id: 'tet', name: 'Atlético Tetuán', type: 'tetuan' },
+        { id: 'cul', name: 'Cultural Leonesa', type: 'culturalleonesa' }
+    ];
+    const getTeam = id => teams.find(t => t.id === id);
+
+    const SAVE_KEY = 'miniFootballCup_save_v1';
+    let selectedNewTeamId = 'bar'; // choix en cours dans l'écran de sélection
+    let state = null;              // état du tournoi en cours
+    let currentMatchRef = null;    // { round, index, playerIsTeam1 }
+
+    let selectedTeamIndex = 0; // index dans teams[] de l'équipe du joueur pour le match affiché
+    let aiTeamIndex = 1;
+
+    let gameSettings = { ballBaseSpeed: 1.5, aiSpeed: 2.5, soundOn: true };
+
+    /* ============================================================
+       SON (généré, aucun fichier externe nécessaire)
+    ============================================================ */
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) {
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+        }
+    }
+    function playTone(freq, duration, type, vol, delay) {
+        if (!gameSettings.soundOn || !audioCtx) return;
+        const t0 = audioCtx.currentTime + (delay || 0);
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type || 'sine';
+        osc.frequency.setValueAtTime(freq, t0);
+        gain.gain.setValueAtTime(vol || 0.15, t0);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(t0); osc.stop(t0 + duration);
+    }
+    function playWhistle() { playTone(2100, 0.16, 'square', 0.13, 0); playTone(1700, 0.16, 'square', 0.1, 0.06); }
+    function playGoalSound() { [523, 659, 784, 1046].forEach((f, i) => playTone(f, 0.16, 'triangle', 0.16, i * 0.09)); }
+    function playBounce() { playTone(220, 0.05, 'square', 0.04, 0); }
+    function playKickoff() { playTone(700, 0.12, 'sine', 0.1, 0); }
+    function playClick() { playTone(500, 0.05, 'sine', 0.06, 0); }
+
+    /* ============================================================
+       NAVIGATION ENTRE ÉCRANS
+    ============================================================ */
+    function hideAllScreens() {
+        ['home-screen', 'start-screen', 'settings-screen', 'team-screen', 'bracket-screen'].forEach(id =>
+            document.getElementById(id).classList.add('hidden'));
+        document.getElementById('fieldCanvas').classList.add('hidden');
+        document.getElementById('pause-btn').classList.add('hidden');
+        document.getElementById('pause-overlay').classList.add('hidden');
+    }
+    function goToHome() {
+        initAudio();
+        matchRunning = false;
+        hideAllScreens();
+        document.getElementById('home-screen').classList.remove('hidden');
+    }
+    function goToStartScreen() {
+        initAudio(); playClick();
+        hideAllScreens();
+        document.getElementById('start-screen').classList.remove('hidden');
+        const saved = localStorage.getItem(SAVE_KEY);
+        const continueBtn = document.getElementById('continue-btn');
+        continueBtn.classList.toggle('hidden', !saved);
+        if (saved) {
+            try {
+                const savedState = JSON.parse(saved);
+                const playerT = teams.find(t => t.id === savedState.playerTeamId);
+                if (savedState.tournamentComplete) {
+                    continueBtn.textContent = '▶ VOIR LE RÉSULTAT';
+                } else {
+                    const r = savedState.currentRound;
+                    const m = savedState.bracket[r].find(mm => !mm.played && (mm.team1Id === savedState.playerTeamId || mm.team2Id === savedState.playerTeamId));
+                    if (m) {
+                        const oppId = m.team1Id === savedState.playerTeamId ? m.team2Id : m.team1Id;
+                        const oppT = teams.find(t => t.id === oppId);
+                        continueBtn.textContent = `▶ CONTINUER : ${playerT ? playerT.name : '?'} vs ${oppT ? oppT.name : '?'}`;
+                    } else {
+                        continueBtn.textContent = '▶ CONTINUER';
+                    }
+                }
+            } catch (e) { continueBtn.textContent = '▶ CONTINUER'; }
+        }
+    }
+    function goToSettings() { hideAllScreens(); document.getElementById('settings-screen').classList.remove('hidden'); }
+    function goToTeamSelect() { hideAllScreens(); document.getElementById('team-screen').classList.remove('hidden'); renderTeamsGrid(); }
+    function goToBracketScreen() { hideAllScreens(); document.getElementById('bracket-screen').classList.remove('hidden'); renderBracketScreen(); }
+
+    function onContinuePressed() {
+        initAudio(); playClick();
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) { goToHome(); return; }
+        state = JSON.parse(raw);
+        goToBracketScreen();
+    }
+    function onNewTournamentPressed() { initAudio(); playClick(); goToTeamSelect(); }
+
+    /* ============================================================
+       SÉLECTION D'ÉQUIPE
+    ============================================================ */
+    function renderTeamsGrid() {
+        const grid = document.getElementById('teamsGrid');
+        grid.innerHTML = '';
+        teams.forEach((team) => {
+            const card = document.createElement('div');
+            card.className = `team-card ${team.id === selectedNewTeamId ? 'selected' : ''}`;
+            card.innerHTML = `<span style="font-size:9px; background:rgba(0,0,0,0.6); color:#fff; width:100%; padding:2px; position:absolute; bottom:0;">${team.name}</span>`;
+            const miniCanvas = document.createElement('canvas');
+            miniCanvas.width = 50; miniCanvas.height = 40;
+            drawCustomBadge(miniCanvas.getContext('2d'), 25, 20, 18, team.type);
+            card.prepend(miniCanvas);
+            card.onclick = () => { initAudio(); playClick(); selectedNewTeamId = team.id; renderTeamsGrid(); };
+            grid.appendChild(card);
+        });
+    }
+
+    function onSharePressed() {
+        initAudio(); playClick();
+        // Bouton non-fonctionnel pour l'instant : le lien sera ajouté ici lors de la publication de l'app.
+        // Exemple futur : if (navigator.share) navigator.share({ title: 'Mini Football Cup', url: 'LIEN_A_AJOUTER' });
+    }
+    function updateSettings() {
+        gameSettings.ballBaseSpeed = parseFloat(document.getElementById('ballSpeedRange').value);
+        gameSettings.aiSpeed = parseFloat(document.getElementById('aiSpeedRange').value);
+        gameSettings.soundOn = document.getElementById('soundRange').value === '1';
+        aiTeam.speed = gameSettings.aiSpeed;
+        document.getElementById('sound-label').textContent = '🔊 Son : ' + (gameSettings.soundOn ? 'Activé' : 'Coupé');
+    }
+
+    /* ============================================================
+       LOGIQUE DU TOURNOI (bracket à élimination directe, 16 équipes)
+    ============================================================ */
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+    function emptyMatch() { return { team1Id: null, team2Id: null, score1: 0, score2: 0, played: false, winnerId: null }; }
+    function createSkeletonBracket() {
+        return [
+            Array.from({ length: 8 }, emptyMatch),
+            Array.from({ length: 4 }, emptyMatch),
+            Array.from({ length: 2 }, emptyMatch),
+            Array.from({ length: 1 }, emptyMatch)
+        ];
+    }
+    function confirmTeamAndCreateTournament() {
+        initAudio(); playClick();
+        const ids = shuffle(teams.map(t => t.id));
+        const bracket = createSkeletonBracket();
+        for (let i = 0; i < 8; i++) {
+            bracket[0][i].team1Id = ids[i * 2];
+            bracket[0][i].team2Id = ids[i * 2 + 1];
+        }
+        state = {
+            playerTeamId: selectedNewTeamId,
+            bracket: bracket,
+            currentRound: 0,
+            tournamentComplete: false,
+            playerEliminated: false,
+            eliminatedRoundName: null,
+            championId: null
+        };
+        saveGame();
+        goToBracketScreen();
+    }
+    function saveGame() {
+        if (state) localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    }
+    function clearSave() { localStorage.removeItem(SAVE_KEY); }
+
+    function simulateMatch(m) {
+        if (m.played || !m.team1Id || !m.team2Id) return;
+        let s1 = Math.floor(Math.random() * 4);
+        let s2 = Math.floor(Math.random() * 4);
+        if (s1 === s2) { if (Math.random() < 0.5) s1++; else s2++; }
+        m.score1 = s1; m.score2 = s2; m.played = true;
+        m.winnerId = s1 > s2 ? m.team1Id : m.team2Id;
+    }
+    function fillNextRound(roundIndex) {
+        const prev = state.bracket[roundIndex - 1];
+        const round = state.bracket[roundIndex];
+        for (let i = 0; i < round.length; i++) {
+            round[i].team1Id = prev[i * 2].winnerId;
+            round[i].team2Id = prev[i * 2 + 1].winnerId;
+        }
+    }
+    const ROUND_NAMES = ['Seizièmes de finale', 'Quarts de finale', 'Demi-finales', 'Finale'];
+
+    function advanceIfRoundComplete(roundIndex) {
+        const round = state.bracket[roundIndex];
+        if (!round.every(m => m.played)) return;
+        if (roundIndex + 1 < state.bracket.length) {
+            fillNextRound(roundIndex + 1);
+            state.currentRound = roundIndex + 1;
+        } else {
+            state.tournamentComplete = true;
+            state.championId = round[0].winnerId;
+        }
+    }
+    function autoResolveRemaining() {
+        let guard = 0;
+        while (!state.tournamentComplete && guard < 20) {
+            guard++;
+            const r = state.currentRound;
+            state.bracket[r].forEach(m => simulateMatch(m));
+            advanceIfRoundComplete(r);
+        }
+    }
+
+    function onBracketAction() {
+        initAudio(); playClick();
+        if (state.tournamentComplete) {
+            clearSave();
+            goToTeamSelect();
+            return;
+        }
+        const r = state.currentRound;
+        // Simule les autres rencontres du tour (celles qui n'impliquent pas le joueur)
+        state.bracket[r].forEach(m => {
+            if (!m.played && m.team1Id !== state.playerTeamId && m.team2Id !== state.playerTeamId) simulateMatch(m);
+        });
+        const pmIndex = state.bracket[r].findIndex(m => !m.played && (m.team1Id === state.playerTeamId || m.team2Id === state.playerTeamId));
+        if (pmIndex >= 0) {
+            const m = state.bracket[r][pmIndex];
+            currentMatchRef = { round: r, index: pmIndex, playerIsTeam1: m.team1Id === state.playerTeamId };
+            const opponentId = currentMatchRef.playerIsTeam1 ? m.team2Id : m.team1Id;
+            launchMatch(state.playerTeamId, opponentId);
+        } else {
+            // Le joueur est déjà éliminé : on résout le reste automatiquement
+            autoResolveRemaining();
+            saveGame();
+            renderBracketScreen();
+        }
+    }
+
+    function recordMatchResult() {
+        const { round, index, playerIsTeam1 } = currentMatchRef;
+        const m = state.bracket[round][index];
+        if (playerIsTeam1) { m.score1 = scoreTeam2; m.score2 = scoreTeam1; }
+        else { m.score1 = scoreTeam1; m.score2 = scoreTeam2; }
+        m.played = true;
+        m.winnerId = m.score1 > m.score2 ? m.team1Id : m.team2Id;
+        if (m.winnerId !== state.playerTeamId) {
+            state.playerEliminated = true;
+            state.eliminatedRoundName = ROUND_NAMES[round];
+        }
+        advanceIfRoundComplete(round);
+        if (state.playerEliminated && !state.tournamentComplete) autoResolveRemaining();
+        saveGame();
+    }
+
+    /* ============================================================
+       AFFICHAGE DU TABLEAU
+    ============================================================ */
+    function renderBracketScreen() {
+        const container = document.getElementById('bracketContainer');
+        container.innerHTML = '';
+        state.bracket.forEach((round, ri) => {
+            const col = document.createElement('div');
+            col.className = 'bracket-round';
+            const h = document.createElement('div');
+            h.className = 'round-title';
+            h.textContent = ROUND_NAMES[ri];
+            col.appendChild(h);
+            round.forEach(m => col.appendChild(renderMatchRow(m)));
+            container.appendChild(col);
+        });
+
+        const statusEl = document.getElementById('bracketStatus');
+        const actionBtn = document.getElementById('bracketActionBtn');
+        if (state.tournamentComplete) {
+            const champ = getTeam(state.championId);
+            statusEl.textContent = state.playerEliminated
+                ? `Tournoi terminé — Champion : ${champ.name} (toi : ${state.eliminatedRoundName})`
+                : `🏆 CHAMPION : ${champ.name} — C'EST TOI !`;
+            actionBtn.textContent = 'NOUVEAU TOURNOI';
+        } else if (state.playerEliminated) {
+            statusEl.textContent = `Éliminé(e) en ${state.eliminatedRoundName} — le tournoi continue...`;
+            actionBtn.textContent = 'VOIR LA SUITE';
+        } else {
+            statusEl.textContent = '';
+            actionBtn.textContent = 'JOUER MON MATCH';
+        }
+    }
+    function renderMatchRow(m) {
+        const row = document.createElement('div');
+        row.className = 'match-row';
+        row.appendChild(renderTeamSlot(m.team1Id, m.score1, m.played, m.winnerId));
+        row.appendChild(renderTeamSlot(m.team2Id, m.score2, m.played, m.winnerId));
+        return row;
+    }
+    function renderTeamSlot(teamId, score, played, winnerId) {
+        const div = document.createElement('div');
+        div.className = 'team-slot';
+        if (teamId === state.playerTeamId) div.classList.add('is-player');
+        if (played && winnerId && teamId && teamId !== winnerId) div.classList.add('eliminated');
+        if (teamId) {
+            const t = getTeam(teamId);
+            const c = document.createElement('canvas');
+            c.width = 22; c.height = 22;
+            drawCustomBadge(c.getContext('2d'), 11, 11, 10, t.type);
+            div.appendChild(c);
+            const name = document.createElement('span');
+            name.textContent = t.name;
+            div.appendChild(name);
+        } else {
+            const span = document.createElement('span');
+            span.textContent = '?';
+            div.appendChild(span);
+        }
+        if (played) {
+            const b = document.createElement('b');
+            b.textContent = score;
+            div.appendChild(b);
+        }
+        return div;
+    }
+
+    /* ============================================================
+       CANVAS / MOTEUR DE JEU
+    ============================================================ */
+    const canvas = document.getElementById('fieldCanvas');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = Math.max(1, Math.round(rect.width)) || 450;
+        canvas.height = Math.max(1, Math.round(rect.height)) || 800;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+
+    let scoreTeam1 = 0; // IA (Haut)
+    let scoreTeam2 = 0; // Joueur (Bas)
+    let seconds = 45;
+    let halfTime = "1ère mi-temps";
+    let overtime = false;
+    let pendingEndMatch = false;
+    let goalAnimationTimer = 0;
+    let matchRunning = false;
+
+    const ball = { x: 225, y: 400, vx: 0, vy: 3.5, radius: 12, speedDecay: 0.998 };
+    const aiTeam = { x: 225, y: 200, radius: 25, speed: 2.5 };
+    const playerTeam = { x: 225, y: 600, radius: 25, isDragging: false };
+    let confetti = [];
+
+    let wasRunningBeforePause = false;
+    function openPauseOverlay() {
+        if (!matchRunning) return;
+        initAudio(); playClick();
+        wasRunningBeforePause = matchRunning;
+        matchRunning = false;
+        document.getElementById('pause-score-text').textContent = `${teams[selectedTeamIndex].name} ${scoreTeam1} - ${scoreTeam2} ${teams[aiTeamIndex].name}`;
+        document.getElementById('pause-mute-btn').textContent = gameSettings.soundOn ? '🔊 Couper le son' : '🔇 Réactiver le son';
+        document.getElementById('pause-overlay').classList.remove('hidden');
+    }
+    function closePauseOverlay() {
+        initAudio(); playClick();
+        document.getElementById('pause-overlay').classList.add('hidden');
+        matchRunning = wasRunningBeforePause;
+    }
+    function toggleMuteFromPause() {
+        gameSettings.soundOn = !gameSettings.soundOn;
+        document.getElementById('pause-mute-btn').textContent = gameSettings.soundOn ? '🔊 Couper le son' : '🔇 Réactiver le son';
+        if (gameSettings.soundOn) playClick();
+    }
+
+    function launchMatch(playerTeamId, opponentTeamId) {
+        selectedTeamIndex = teams.findIndex(t => t.id === playerTeamId);
+        aiTeamIndex = teams.findIndex(t => t.id === opponentTeamId);
+        aiTeam.speed = gameSettings.aiSpeed;
+        hideAllScreens();
+        canvas.classList.remove('hidden');
+        resizeCanvas();
+        document.getElementById('pause-btn').classList.remove('hidden');
+        scoreTeam1 = 0; scoreTeam2 = 0;
+        seconds = 45;
+        halfTime = "1ère mi-temps";
+        overtime = false;
+        pendingEndMatch = false;
+        matchRunning = true;
+        resetBall();
+        playWhistle();
+    }
+
+    /* ---------- Overlay (remplace alert()) ---------- */
+    function showOverlay(title, text, btnLabel, onConfirm) {
+        matchRunning = false;
+        document.getElementById('overlay-title').textContent = title;
+        document.getElementById('overlay-text').textContent = text;
+        const btn = document.getElementById('overlay-btn');
+        btn.textContent = btnLabel;
+        btn.onclick = () => {
+            document.getElementById('match-overlay').classList.add('hidden');
+            onConfirm();
+        };
+        document.getElementById('match-overlay').classList.remove('hidden');
+    }
+
+    function endMatch() {
+        matchRunning = false;
+        playWhistle();
+        const aiName = teams[aiTeamIndex].name;
+        const playerName = teams[selectedTeamIndex].name;
+        showOverlay('FIN DU MATCH', `${aiName} ${scoreTeam1} - ${scoreTeam2} ${playerName}`, 'VOIR LE TABLEAU', () => {
+            recordMatchResult();
+            goToBracketScreen();
+        });
+    }
+
+    setInterval(() => {
+        if (!matchRunning || goalAnimationTimer > 0 || overtime) return;
+        seconds--;
+        if (seconds < 0) {
+            if (halfTime === "1ère mi-temps") {
+                halfTime = "2ème mi-temps";
+                seconds = 45;
+                const aiName = teams[aiTeamIndex].name;
+                const playerName = teams[selectedTeamIndex].name;
+                showOverlay('MI-TEMPS', `${aiName} ${scoreTeam1} - ${scoreTeam2} ${playerName}`, 'CONTINUER', () => {
+                    matchRunning = true;
+                    playWhistle();
+                });
+            } else {
+                if (scoreTeam1 === scoreTeam2) {
+                    overtime = true;
+                    halfTime = "Prolongation";
+                    showOverlay('ÉGALITÉ !', 'Prolongation : le prochain but gagne le match !', 'JOUER', () => {
+                        matchRunning = true;
+                        playWhistle();
+                    });
+                } else {
+                    endMatch();
+                }
+            }
+        }
+    }, 1000);
+
+    function renderTeamsGridUnused() {} // (placeholder retiré)
+
+    function resetBall() {
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height / 2;
+        ball.vx = (Math.random() - 0.5) * 4;
+        ball.vy = (Math.random() > 0.5 ? 1 : -1) * 3;
+        playerTeam.x = canvas.width / 2;
+        playerTeam.y = 650;
+        aiTeam.x = canvas.width / 2;
+        aiTeam.y = 150;
+    }
+
+    function triggerConfetti() {
+        confetti = [];
+        for (let i = 0; i < 90; i++) {
+            confetti.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                vx: (Math.random() - 0.5) * 6,
+                vy: Math.random() * 4 + 2,
+                size: Math.random() * 10 + 5,
+                color: ['#ff4757', '#2ed573', '#ffa502', '#1e90ff', '#ffffff', '#ffd700'][Math.floor(Math.random() * 6)],
+                rotation: Math.random() * 360,
+                vRot: (Math.random() - 0.5) * 10
+            });
+        }
+        goalAnimationTimer = 110;
+    }
+
+    function drawField() {
+        const stripeHeight = 40;
+        ctx.fillStyle = '#228B22';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        for (let y = 0; y < canvas.height; y += stripeHeight * 2) {
+            ctx.fillStyle = '#1e7b1e';
+            ctx.fillRect(0, y, canvas.width, stripeHeight);
+        }
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+        ctx.beginPath();
+        ctx.moveTo(20, canvas.height / 2);
+        ctx.lineTo(canvas.width - 20, canvas.height / 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, 60, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeRect(canvas.width / 2 - 90, 20, 180, 100);
+        ctx.strokeRect(canvas.width / 2 - 40, 20, 80, 40);
+        ctx.strokeRect(canvas.width / 2 - 90, canvas.height - 120, 180, 100);
+        ctx.strokeRect(canvas.width / 2 - 40, canvas.height - 60, 80, 40);
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillRect(canvas.width / 2 - 50, 5, 100, 15);
+        ctx.fillRect(canvas.width / 2 - 50, canvas.height - 20, 100, 15);
+    }
+
+    // Ballon réaliste avec motif pentagones/hexagones
+    function drawBall(x, y, r) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#222';
+        ctx.stroke();
+
+        function pentagon(cx, cy, size, rot) {
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const ang = rot + i * (Math.PI * 2 / 5) - Math.PI / 2;
+                const px = cx + Math.cos(ang) * size;
+                const py = cy + Math.sin(ang) * size;
+                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fillStyle = '#111';
+            ctx.fill();
+        }
+        // pentagone central
+        pentagon(x, y, r * 0.4, 0);
+        // pentagones satellites
+        for (let i = 0; i < 5; i++) {
+            const ang = i * (Math.PI * 2 / 5) - Math.PI / 2;
+            const sx = x + Math.cos(ang) * r * 0.72;
+            const sy = y + Math.sin(ang) * r * 0.72;
+            pentagon(sx, sy, r * 0.26, ang);
+        }
+        ctx.restore();
+    }
+
+    function drawUI() {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px "Courier New"';
+        ctx.textAlign = 'left';
+        ctx.fillText(scoreTeam1, 30, canvas.height / 2 - 40);
+        ctx.fillText(scoreTeam2, 30, canvas.height / 2 + 65);
+        ctx.font = 'bold 14px "Courier New"';
+        ctx.textAlign = 'right';
+        ctx.fillText(halfTime, canvas.width - 20, canvas.height / 2 - 45);
+        ctx.fillText(overtime ? '⚡' : seconds + 's', canvas.width - 20, canvas.height / 2 + 45);
+    }
+
+    function update() {
+        if (!matchRunning) return;
+        if (goalAnimationTimer > 0) {
+            goalAnimationTimer--;
+            if (goalAnimationTimer === 0 && pendingEndMatch) { pendingEndMatch = false; endMatch(); }
+            return;
+        }
+
+        if (ball.y < canvas.height / 2) {
+            if (aiTeam.x < ball.x) aiTeam.x += aiTeam.speed;
+            if (aiTeam.x > ball.x) aiTeam.x -= aiTeam.speed;
+            if (aiTeam.y < ball.y) aiTeam.y += aiTeam.speed;
+            if (aiTeam.y > ball.y) aiTeam.y -= aiTeam.speed;
+        } else {
+            if (aiTeam.x < canvas.width / 2) aiTeam.x += aiTeam.speed * 0.5;
+            if (aiTeam.x > canvas.width / 2) aiTeam.x -= aiTeam.speed * 0.5;
+            if (aiTeam.y > 180) aiTeam.y -= aiTeam.speed * 0.5;
+        }
+
+        ball.x += ball.vx * gameSettings.ballBaseSpeed;
+        ball.y += ball.vy * gameSettings.ballBaseSpeed;
+        ball.vx *= ball.speedDecay;
+        ball.vy *= ball.speedDecay;
+        if (Math.abs(ball.vx) < 0.8) ball.vx = ball.vx >= 0 ? 1.2 : -1.2;
+        if (Math.abs(ball.vy) < 0.8) ball.vy = ball.vy >= 0 ? 1.5 : -1.5;
+
+        if (ball.x - ball.radius < 20) { ball.x = 20 + ball.radius; ball.vx *= -1; }
+        if (ball.x + ball.radius > canvas.width - 20) { ball.x = canvas.width - 20 - ball.radius; ball.vx *= -1; }
+
+        if (ball.y < 25) {
+            if (ball.x > canvas.width / 2 - 50 && ball.x < canvas.width / 2 + 50) {
+                scoreTeam2++;
+                playGoalSound();
+                if (overtime) pendingEndMatch = true;
+                triggerConfetti();
+                resetBall();
+                return;
+            } else { ball.y = 25; ball.vy *= -1; }
+        }
+        if (ball.y > canvas.height - 25) {
+            if (ball.x > canvas.width / 2 - 50 && ball.x < canvas.width / 2 + 50) {
+                scoreTeam1++;
+                playGoalSound();
+                if (overtime) pendingEndMatch = true;
+                triggerConfetti();
+                resetBall();
+                return;
+            } else { ball.y = canvas.height - 25; ball.vy *= -1; }
+        }
+
+        checkCollision(aiTeam);
+        checkCollision(playerTeam);
+    }
+
+    function checkCollision(entity) {
+        const dx = ball.x - entity.x;
+        const dy = ball.y - entity.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = ball.radius + entity.radius;
+        if (dist < minDist) {
+            const angle = Math.atan2(dy, dx);
+            const hitSpeed = entity.isDragging ? 9 : 5;
+            ball.vx = Math.cos(angle) * (hitSpeed + Math.abs(ball.vx) * 0.5);
+            ball.vy = Math.sin(angle) * (hitSpeed + Math.abs(ball.vy) * 0.5);
+            ball.x = entity.x + Math.cos(angle) * minDist;
+            ball.y = entity.y + Math.sin(angle) * minDist;
+            playBounce();
+        }
+    }
+
+    function drawCelebration() {
+        if (goalAnimationTimer > 0) {
+            confetti.forEach(c => {
+                c.x += c.vx; c.y += c.vy; c.rotation += c.vRot;
+                ctx.save();
+                ctx.translate(c.x, c.y);
+                ctx.rotate(c.rotation * Math.PI / 180);
+                ctx.fillStyle = c.color;
+                ctx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size * 0.6);
+                ctx.restore();
+            });
+            ctx.save();
+            ctx.font = 'bold 50px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#00ffcc';
+            ctx.shadowBlur = 25;
+            ctx.fillStyle = '#fffa65';
+            ctx.fillText("BUT !", canvas.width / 2, canvas.height / 2);
+            ctx.restore();
+        }
+    }
+
+    /* ============================================================
+       BLASONS — tous dessinés en code, propres et distincts
+    ============================================================ */
+    function badgeText(targetCtx, x, y, label, color, size) {
+        targetCtx.fillStyle = color;
+        targetCtx.font = `bold ${size || 10}px sans-serif`;
+        targetCtx.textAlign = 'center';
+        targetCtx.textBaseline = 'middle';
+        targetCtx.fillText(label, x, y);
+    }
+    const GENERIC_BADGES = {
+        zaragoza: ['#ffffff', '#0033a0', 'ZAR'],
+        deportivo: ['#0033a0', '#ffffff', 'DEP'],
+        valladolid: ['#6a1b9a', '#ffffff', 'VLL'],
+        racing: ['#008a3e', '#ffffff', 'RAC'],
+        sporting: ['#d81920', '#ffffff', 'SPO'],
+        oviedo: ['#0057a8', '#0057a8', 'OVI'],
+        laspalmas: ['#ffe600', '#0057a8', 'LPA'],
+        granada: ['#d81920', '#ffffff', 'GRA'],
+        malagacf: ['#0057a8', '#ffffff', 'MAL'],
+        alaves: ['#0057a8', '#ffffff', 'ALA'],
+        elche: ['#00693e', '#ffffff', 'ELX'],
+        levante: ['#0057a8', '#d81920', 'LEV'],
+        cdmalaga: ['#ffffff', '#0057a8', 'CDM'],
+        hercules: ['#0057a8', '#ffffff', 'HER'],
+        tenerife: ['#0057a8', '#ffffff', 'TFE'],
+        cadiz: ['#ffd400', '#ffd400', 'CAD'],
+        murcia: ['#7a1f3d', '#ffffff', 'MUR'],
+        salamanca: ['#ffffff', '#000000', 'SAL'],
+        sabadell: ['#ffffff', '#0057a8', 'SAB'],
+        eibar: ['#5b2a86', '#0057a8', 'EIB'],
+        logrones: ['#ffffff', '#7a1f3d', 'LOG'],
+        castellon: ['#ffffff', '#00693e', 'CAS'],
+        girona: ['#d81920', '#ffffff', 'GIR'],
+        albacete: ['#ffffff', '#ffffff', 'ALB'],
+        cordoba: ['#ffffff', '#00693e', 'COR'],
+        leganes: ['#0057a8', '#0057a8', 'LEG'],
+        compostela: ['#ffffff', '#0057a8', 'COM'],
+        recreativo: ['#0057a8', '#ffffff', 'REC'],
+        burgos: ['#ffffff', '#000000', 'BUR'],
+        pontevedra: ['#0b1f4e', '#ffffff', 'PON'],
+        numancia: ['#d81920', '#d81920', 'NUM'],
+        arenas: ['#00693e', '#ffffff', 'ARE'],
+        realburgos: ['#ffffff', '#000000', 'RBU'],
+        gimnastic: ['#d81920', '#ffffff', 'NAS'],
+        extremadura: ['#ffffff', '#00693e', 'EXT'],
+        merida: ['#ffffff', '#6a1b9a', 'MER'],
+        alcoyano: ['#ffffff', '#00693e', 'ALC'],
+        jaen: ['#ffffff', '#00693e', 'JAE'],
+        huesca: ['#0057a8', '#5b2a86', 'HUE'],
+        realunion: ['#0057a8', '#ffffff', 'RUN'],
+        adalmeria: ['#d81920', '#d81920', 'ADA'],
+        europa: ['#5b2a86', '#5b2a86', 'EUR'],
+        lleida: ['#0057a8', '#0057a8', 'LLE'],
+        xerez: ['#ffffff', '#0057a8', 'XER'],
+        condal: ['#0057a8', '#0057a8', 'CND'],
+        tetuan: ['#d81920', '#ffffff', 'TET'],
+        culturalleonesa: ['#ffffff', '#7a1f3d', 'CUL']
+    };
+
+    function drawCustomBadge(targetCtx, x, y, radius, type) {
+        targetCtx.save();
+        targetCtx.beginPath();
+        targetCtx.arc(x, y, radius, 0, Math.PI * 2);
+        targetCtx.closePath();
+        targetCtx.clip();
+        targetCtx.fillStyle = '#ffffff';
+        targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+
+        if (type === 'barca') {
+            targetCtx.fillStyle = '#a50044';
+            targetCtx.fillRect(x - radius, y - radius, radius * 0.7, radius * 2);
+            targetCtx.fillStyle = '#004d98';
+            targetCtx.fillRect(x - radius * 0.3, y - radius, radius * 0.7, radius * 2);
+            targetCtx.fillStyle = '#fcce00';
+            targetCtx.fillRect(x - radius * 0.1, y - radius * 0.5, radius * 0.2, radius);
+        } else if (type === 'real') {
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#cca750';
+            targetCtx.beginPath(); targetCtx.arc(x, y, radius * 0.5, 0, Math.PI * 2); targetCtx.fill();
+            badgeText(targetCtx, x, y, 'RM', '#003366', 11);
+        } else if (type === 'rayo') {
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.strokeStyle = '#e11d24';
+            targetCtx.lineWidth = 6;
+            targetCtx.beginPath();
+            targetCtx.moveTo(x - radius, y - radius);
+            targetCtx.lineTo(x + radius, y + radius);
+            targetCtx.stroke();
+            badgeText(targetCtx, x, y, 'RVM', '#000', 9);
+        } else if (type === 'mallorca') {
+            targetCtx.fillStyle = '#d71920';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#000000';
+            targetCtx.fillRect(x - radius * 0.4, y - radius, radius * 0.8, radius * 2);
+            badgeText(targetCtx, x, y, 'RCD', '#fff', 8);
+        } else if (type === 'betis') {
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#008b45';
+            targetCtx.fillRect(x - radius, y - radius, radius * 0.6, radius * 2);
+            targetCtx.fillRect(x + radius * 0.2, y - radius, radius * 0.6, radius * 2);
+        } else if (type === 'espanyol') {
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#0072ce';
+            targetCtx.fillRect(x - radius * 0.4, y - radius, radius * 0.8, radius * 2);
+            targetCtx.fillStyle = '#f7c600';
+            targetCtx.fillRect(x - radius * 0.1, y - radius, radius * 0.2, radius * 2);
+        } else if (type === 'osasuna') {
+            targetCtx.fillStyle = '#a61c1c';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#0b2b40';
+            targetCtx.fillRect(x - radius, y - radius * 0.4, radius * 2, radius * 0.8);
+        } else if (type === 'atletico') {
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#cb3524';
+            targetCtx.fillRect(x - radius, y - radius, radius * 0.6, radius * 2);
+            targetCtx.fillRect(x + radius * 0.2, y - radius, radius * 0.6, radius * 2);
+            targetCtx.fillStyle = '#0b2b6b';
+            targetCtx.fillRect(x - radius, y + radius * 0.7, radius * 2, radius * 0.3);
+        } else if (type === 'bilbao') {
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            const stripeW = radius * 2 / 7;
+            for (let i = 0; i < 7; i += 2) {
+                targetCtx.fillStyle = '#e2001a';
+                targetCtx.fillRect(x - radius + i * stripeW, y - radius, stripeW, radius * 2);
+            }
+            badgeText(targetCtx, x, y, 'ATH', '#000', 8);
+        } else if (type === 'valencia') {
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#000000';
+            targetCtx.beginPath();
+            targetCtx.moveTo(x - radius, y - radius);
+            targetCtx.lineTo(x - radius * 0.2, y - radius);
+            targetCtx.lineTo(x + radius, y + radius * 0.4);
+            targetCtx.lineTo(x + radius, y + radius);
+            targetCtx.lineTo(x + radius * 0.2, y + radius);
+            targetCtx.lineTo(x - radius, y - radius * 0.4);
+            targetCtx.closePath();
+            targetCtx.fill();
+            targetCtx.fillStyle = '#f47b20';
+            targetCtx.beginPath(); targetCtx.arc(x, y, radius * 0.28, 0, Math.PI * 2); targetCtx.fill();
+        } else if (type === 'sevilla') {
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#d81920';
+            targetCtx.fillRect(x - radius, y, radius * 2, radius);
+            targetCtx.fillStyle = '#e6b800';
+            targetCtx.fillRect(x - radius, y - radius * 0.12, radius * 2, radius * 0.24);
+        } else if (type === 'villarreal') {
+            targetCtx.fillStyle = '#ffe500';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.strokeStyle = '#00529b';
+            targetCtx.lineWidth = radius * 0.28;
+            targetCtx.beginPath(); targetCtx.arc(x, y, radius * 0.68, 0, Math.PI * 2); targetCtx.stroke();
+            badgeText(targetCtx, x, y, 'VIL', '#00529b', 9);
+        } else if (type === 'sociedad') {
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#0033a0';
+            targetCtx.fillRect(x - radius, y - radius, radius * 0.55, radius * 2);
+            targetCtx.fillRect(x - radius * 0.05, y - radius, radius * 0.55, radius * 2);
+            badgeText(targetCtx, x, y, 'RSO', '#fff', 8);
+        } else if (type === 'celta') {
+            targetCtx.fillStyle = '#8ecbe6';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.strokeStyle = '#ffffff';
+            targetCtx.lineWidth = 3;
+            targetCtx.beginPath(); targetCtx.arc(x, y, radius * 0.6, 0, Math.PI * 2); targetCtx.stroke();
+            badgeText(targetCtx, x, y, 'CEL', '#00305e', 9);
+        } else if (type === 'getafe') {
+            targetCtx.fillStyle = '#0b2a6b';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.fillRect(x - radius, y - radius * 0.15, radius * 2, radius * 0.3);
+            badgeText(targetCtx, x, y, 'GET', '#fff', 8);
+        } else if (type === 'almeria') {
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#d0102a';
+            targetCtx.beginPath();
+            targetCtx.moveTo(x - radius, y - radius);
+            targetCtx.lineTo(x + radius, y - radius);
+            targetCtx.lineTo(x - radius, y + radius);
+            targetCtx.closePath();
+            targetCtx.fill();
+            badgeText(targetCtx, x, y, 'ALM', '#d0102a', 8);
+        } else if (GENERIC_BADGES[type]) {
+            const [c1, c2, abbr] = GENERIC_BADGES[type];
+            targetCtx.fillStyle = c1;
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = c2;
+            targetCtx.fillRect(x, y - radius, radius, radius * 2);
+            badgeText(targetCtx, x, y, abbr, c1 === '#ffffff' ? '#000' : '#fff', 8);
+        } else {
+            targetCtx.fillStyle = '#ee2523';
+            targetCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            targetCtx.fillStyle = '#ffffff';
+            targetCtx.beginPath(); targetCtx.arc(x, y, radius * 0.6, 0, Math.PI * 2); targetCtx.fill();
+        }
+        targetCtx.restore();
+
+        targetCtx.beginPath();
+        targetCtx.arc(x, y, radius, 0, Math.PI * 2);
+        targetCtx.strokeStyle = '#ffd700';
+        targetCtx.lineWidth = 2.5;
+        targetCtx.stroke();
+    }
+
+    /* ---------- Contrôles tactiles / souris ---------- */
+    function getTouchPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) };
+    }
+    window.addEventListener('mousedown', (e) => {
+        if (!matchRunning) return;
+        const pos = getTouchPos(e);
+        if (Math.hypot(pos.x - playerTeam.x, pos.y - playerTeam.y) < playerTeam.radius + 20) playerTeam.isDragging = true;
+    });
+    window.addEventListener('mousemove', (e) => {
+        if (!playerTeam.isDragging || !matchRunning) return;
+        const pos = getTouchPos(e);
+        playerTeam.x = Math.max(35, Math.min(canvas.width - 35, pos.x));
+        playerTeam.y = Math.max(canvas.height / 2 + 25, Math.min(canvas.height - 35, pos.y));
+    });
+    window.addEventListener('mouseup', () => { playerTeam.isDragging = false; });
+    window.addEventListener('touchstart', (e) => {
+        if (!matchRunning) return;
+        const pos = getTouchPos(e);
+        if (Math.hypot(pos.x - playerTeam.x, pos.y - playerTeam.y) < playerTeam.radius + 30) playerTeam.isDragging = true;
+    });
+    window.addEventListener('touchmove', (e) => {
+        if (!playerTeam.isDragging || !matchRunning) return;
+        const pos = getTouchPos(e);
+        playerTeam.x = Math.max(35, Math.min(canvas.width - 35, pos.x));
+        playerTeam.y = Math.max(canvas.height / 2 + 25, Math.min(canvas.height - 35, pos.y));
+    });
+    window.addEventListener('touchend', () => { playerTeam.isDragging = false; });
+
+    function gameLoop() {
+        update();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawField();
+        drawUI();
+        drawCustomBadge(ctx, aiTeam.x, aiTeam.y, aiTeam.radius, teams[aiTeamIndex].type);
+        drawCustomBadge(ctx, playerTeam.x, playerTeam.y, playerTeam.radius, teams[selectedTeamIndex].type);
+        drawBall(ball.x, ball.y, ball.radius);
+        drawCelebration();
+        requestAnimationFrame(gameLoop);
+    }
+    gameLoop();
+
+    /* ============================================================
+       DÉMARRAGE
+    ============================================================ */
+    goToHome();
+</script>
+
+</body>
+</html>
