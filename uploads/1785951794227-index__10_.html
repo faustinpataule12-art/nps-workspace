@@ -1,0 +1,581 @@
+[Contenu du fichier "index (10).html"] :
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mini Football Cup</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+        body {
+            background-color: #0c141f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            max-height: 850px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            overflow: hidden;
+            background: linear-gradient(135deg, #1b4d3e, #0c2b22);
+        }
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #ffffff;
+            text-align: center;
+            background: rgba(12, 20, 31, 0.92);
+            z-index: 10;
+        }
+        .hidden {
+            display: none !important;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #ffd700;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .btn {
+            background: linear-gradient(to bottom, #2ed573, #26af5f);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4);
+            margin: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            transition: transform 0.1s;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-secondary {
+            background: linear-gradient(to bottom, #3742fa, #2f3542);
+            box-shadow: 0 5px 15px rgba(55, 66, 250, 0.4);
+        }
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .team-card {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+        }
+        .team-card.selected {
+            border-color: #ffd700;
+            transform: scale(1.1);
+        }
+        .settings-group {
+            margin: 15px 0;
+            width: 80%;
+            text-align: left;
+        }
+        .settings-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .settings-group input {
+            width: 100%;
+            accent-color: #2ed573;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- ÉCRAN D'ACCUEIL -->
+    <div id="home-screen" class="screen">
+        <h1>MINI FOOTBALL CUP</h1>
+        <button class="btn" onclick="goToTeamSelect()">¡COMENZAR!</button>
+        <button class="btn btn-secondary" onclick="goToSettings()">⚙️ PARÁMETROS</button>
+    </div>
+
+    <!-- ÉCRAN PARAMÈTRES -->
+    <div id="settings-screen" class="screen hidden">
+        <h1>PARÁMETROS</h1>
+        <div class="settings-group">
+            <label id="ball-speed-label">Velocidad del balón: Normal</label>
+            <input type="range" id="ballSpeedRange" min="1" max="3" step="0.5" value="1.5" oninput="updateSettings()">
+        </div>
+        <div class="settings-group">
+            <label id="ai-speed-label">Dificultad IA: Normal</label>
+            <input type="range" id="aiSpeedRange" min="1" max="3" step="0.5" value="2.5" oninput="updateSettings()">
+        </div>
+        <button class="btn" onclick="goToHome()">VOLVER</button>
+    </div>
+
+    <!-- ÉCRAN SÉLECTION DES ÉQUIPES -->
+    <div id="team-screen" class="screen hidden">
+        <h1>ELIGE TU EQUIPO</h1>
+        <div class="teams-grid" id="teamsGrid"></div>
+        <button class="btn" onclick="startGameMatch()">¡CONFIRMAR!</button>
+        <button class="btn btn-secondary" style="font-size: 14px; padding: 10px 20px;" onclick="goToHome()">VOLVER</button>
+    </div>
+
+    <!-- CANVAS DU JEU -->
+    <canvas id="fieldCanvas" class="hidden"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById('fieldCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+        canvas.width = 450;
+        canvas.height = 800;
+    }
+    resizeCanvas();
+
+    // Données des 16 équipes
+    const teams = [
+        { id: 'bar', name: 'Barcelona', c1: '#a50044', c2: '#004d98' },
+        { id: 'rma', name: 'Real Madrid', c1: '#ffffff', c2: '#cca750' },
+        { id: 'rso', name: 'Real Sociedad', c1: '#006699', c2: '#ffffff' },
+        { id: 'bil', name: 'Athletic Bilbao', c1: '#ee2523', c2: '#ffffff' },
+        { id: 'atm', name: 'Atlético', c1: '#cb3524', c2: '#ffffff' },
+        { id: 'bet', name: 'Real Betis', c1: '#008b45', c2: '#ffffff' },
+        { id: 'osa', name: 'Osasuna', c1: '#a61c1c', c2: '#0b2b40' },
+        { id: 'ray', name: 'Rayo Vallecano', c1: '#ffffff', c2: '#ee2523' },
+        { id: 'vil', name: 'Villarreal', c1: '#ffed00', c2: '#00539f' },
+        { id: 'val', name: 'Valencia', c1: '#ea7600', c2: '#000000' },
+        { id: 'mal', name: 'Mallorca', c1: '#d71920', c2: '#000000' },
+        { id: 'alm', name: 'Almería', c1: '#ed1c24', c2: '#ffffff' },
+        { id: 'get', name: 'Getafe', c1: '#00539f', c2: '#ffffff' },
+        { id: 'esp', name: 'Espanyol', c1: '#0072ce', c2: '#ffffff' },
+        { id: 'cel', name: 'Celta Vigo', c1: '#84c7f3', c2: '#ffffff' },
+        { id: 'sev', name: 'Sevilla', c1: '#ffffff', c2: '#d71920' }
+    ];
+
+    let selectedTeamIndex = 0;
+    let aiTeamIndex = 1;
+
+    // Paramètres modifiables
+    let gameSettings = {
+        ballBaseSpeed: 1.5,
+        aiSpeed: 2.5
+    };
+
+    // État du match
+    let scoreTeam1 = 0; // IA (Haut)
+    let scoreTeam2 = 0; // Joueur (Bas)
+    let seconds = 0;
+    let halfTime = "Primera mitad";
+    let goalAnimationTimer = 0;
+    let matchRunning = false;
+
+    // Ballon perpétuel
+    const ball = {
+        x: 225,
+        y: 400,
+        vx: 0,
+        vy: 3,
+        radius: 12,
+        speedDecay: 0.996 // Glissement quasi infini
+    };
+
+    const aiTeam = { x: 225, y: 200, radius: 25, speed: 2.5 };
+    const playerTeam = { x: 225, y: 600, radius: 25, isDragging: false };
+
+    let confetti = [];
+
+    // Navigation menus
+    function goToTeamSelect() {
+        document.getElementById('home-screen').classList.add('hidden');
+        document.getElementById('settings-screen').classList.add('hidden');
+        document.getElementById('team-screen').classList.remove('hidden');
+        renderTeamsGrid();
+    }
+
+    function goToSettings() {
+        document.getElementById('home-screen').classList.add('hidden');
+        document.getElementById('team-screen').classList.add('hidden');
+        document.getElementById('settings-screen').classList.remove('hidden');
+    }
+
+    function goToHome() {
+        document.getElementById('team-screen').classList.add('hidden');
+        document.getElementById('settings-screen').classList.add('hidden');
+        document.getElementById('home-screen').classList.remove('hidden');
+        matchRunning = false;
+    }
+
+    function renderTeamsGrid() {
+        const grid = document.getElementById('teamsGrid');
+        grid.innerHTML = '';
+        teams.forEach((team, idx) => {
+            const card = document.createElement('div');
+            card.className = `team-card ${idx === selectedTeamIndex ? 'selected' : ''}`;
+            card.style.background = `linear-gradient(135deg, ${team.c1}, ${team.c2})`;
+            card.innerText = team.name.substring(0, 3).toUpperCase();
+            card.onclick = () => {
+                selectedTeamIndex = idx;
+                do {
+                    aiTeamIndex = Math.floor(Math.random() * teams.length);
+                } while (aiTeamIndex === selectedTeamIndex);
+                renderTeamsGrid();
+            };
+            grid.appendChild(card);
+        });
+    }
+
+    function updateSettings() {
+        gameSettings.ballBaseSpeed = parseFloat(document.getElementById('ballSpeedRange').value);
+        gameSettings.aiSpeed = parseFloat(document.getElementById('aiSpeedRange').value);
+        aiTeam.speed = gameSettings.aiSpeed;
+    }
+
+    function startGameMatch() {
+        document.getElementById('team-screen').classList.add('hidden');
+        canvas.classList.remove('hidden');
+        scoreTeam1 = 0;
+        scoreTeam2 = 0;
+        seconds = 0;
+        halfTime = "Primera mitad";
+        matchRunning = true;
+        resetBall();
+    }
+
+    // Chrono des deux mi-temps
+    setInterval(() => {
+        if (!matchRunning || goalAnimationTimer > 0) return;
+        seconds++;
+        if (seconds === 50 && halfTime === "Primera mitad") {
+            halfTime = "Segunda mitad";
+            seconds = 0;
+        } else if (seconds >= 50 && halfTime === "Segunda mitad") {
+            matchRunning = false;
+            alert("¡Partido terminado! Resultado final - IA: " + scoreTeam1 + " | Tu equipo: " + scoreTeam2);
+            goToHome();
+        }
+    }, 1000);
+
+    // Contrôles tactiles / souris
+    function getTouchPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+    }
+
+    window.addEventListener('mousedown', (e) => {
+        if (!matchRunning) return;
+        const pos = getTouchPos(e);
+        if (Math.hypot(pos.x - playerTeam.x, pos.y - playerTeam.y) < playerTeam.radius + 20) {
+            playerTeam.isDragging = true;
+        }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!playerTeam.isDragging || !matchRunning) return;
+        const pos = getTouchPos(e);
+        playerTeam.x = Math.max(35, Math.min(canvas.width - 35, pos.x));
+        playerTeam.y = Math.max(canvas.height / 2 + 25, Math.min(canvas.height - 35, pos.y));
+    });
+
+    window.addEventListener('mouseup', () => { playerTeam.isDragging = false; });
+
+    window.addEventListener('touchstart', (e) => {
+        if (!matchRunning) return;
+        const pos = getTouchPos(e);
+        if (Math.hypot(pos.x - playerTeam.x, pos.y - playerTeam.y) < playerTeam.radius + 30) {
+            playerTeam.isDragging = true;
+        }
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        if (!playerTeam.isDragging || !matchRunning) return;
+        const pos = getTouchPos(e);
+        playerTeam.x = Math.max(35, Math.min(canvas.width - 35, pos.x));
+        playerTeam.y = Math.max(canvas.height / 2 + 25, Math.min(canvas.height - 35, pos.y));
+    });
+
+    window.addEventListener('touchend', () => { playerTeam.isDragging = false; });
+
+    function resetBall() {
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height / 2;
+        ball.vx = (Math.random() - 0.5) * 4;
+        ball.vy = (Math.random() > 0.5 ? 1 : -1) * 3;
+        playerTeam.x = canvas.width / 2;
+        playerTeam.y = 650;
+        aiTeam.x = canvas.width / 2;
+        aiTeam.y = 150;
+    }
+
+    function triggerConfetti() {
+        confetti = [];
+        for (let i = 0; i < 70; i++) {
+            confetti.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                vx: (Math.random() - 0.5) * 6,
+                vy: Math.random() * 4 + 2,
+                size: Math.random() * 8 + 4,
+                color: ['#ff4757', '#2ed573', '#ffa502', '#ffffff'][Math.floor(Math.random() * 4)],
+                rotation: Math.random() * 360,
+                vRot: (Math.random() - 0.5) * 10
+            });
+        }
+        goalAnimationTimer = 100;
+    }
+
+    // Dessin du terrain
+    function drawField() {
+        ctx.fillStyle = '#228B22';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const stripeHeight = 40;
+        for (let y = 0; y < canvas.height; y += stripeHeight * 2) {
+            ctx.fillStyle = '#1e7b1e';
+            ctx.fillRect(0, y, canvas.width, stripeHeight);
+        }
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+        ctx.beginPath();
+        ctx.moveTo(20, canvas.height / 2);
+        ctx.lineTo(canvas.width - 20, canvas.height / 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, 60, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeRect(canvas.width / 2 - 90, 20, 180, 100);
+        ctx.strokeRect(canvas.width / 2 - 90, canvas.height - 120, 180, 100);
+
+        // Buts
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillRect(canvas.width / 2 - 50, 5, 100, 15);
+        ctx.fillRect(canvas.width / 2 - 50, canvas.height - 20, 100, 15);
+    }
+
+    // Dessin des badges
+    function drawTeamBadge(x, y, radius, teamObj) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        const grad = ctx.createLinearGradient(x - radius, y - radius, x + radius, y + radius);
+        grad.addColorStop(0, teamObj.c1);
+        grad.addColorStop(1, teamObj.c2);
+        ctx.fillStyle = grad;
+        ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(teamObj.name.substring(0, 3).toUpperCase(), x, y);
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+    }
+
+    // Design du ballon texturé
+    function drawBall(x, y, r) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#111';
+        ctx.stroke();
+
+        // Motif pentagone central
+        ctx.fillStyle = '#111';
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawUI() {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px "Courier New"';
+        ctx.textAlign = 'left';
+        ctx.fillText(scoreTeam1, 35, canvas.height / 2 - 40);
+        ctx.fillText(scoreTeam2, 35, canvas.height / 2 + 65);
+
+        ctx.font = 'bold 16px "Courier New"';
+        ctx.textAlign = 'right';
+        ctx.fillText(halfTime, canvas.width - 25, canvas.height / 2 - 45);
+        ctx.fillText(seconds + 's', canvas.width - 25, canvas.height / 2 + 45);
+    }
+
+    function update() {
+        if (!matchRunning) return;
+
+        if (goalAnimationTimer > 0) {
+            goalAnimationTimer--;
+            return;
+        }
+
+        // Mouvement fluide perpétuel du ballon
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+        ball.vx *= ball.speedDecay;
+        ball.vy *= ball.speedDecay;
+
+        // Vitesse minimale pour qu'il ne s'arrête jamais complètement
+        if (Math.abs(ball.vx) < 0.8 && Math.abs(ball.vy) < 0.8) {
+            ball.vx += (Math.random() - 0.5) * 2;
+            ball.vy += (Math.random() - 0.5) * 2;
+        }
+
+        // IA adverse
+        if (ball.y < canvas.height / 2) {
+            if (aiTeam.x < ball.x) aiTeam.x += aiTeam.speed;
+            if (aiTeam.x > ball.x) aiTeam.x -= aiTeam.speed;
+            if (aiTeam.y < ball.y) aiTeam.y += aiTeam.speed;
+            if (aiTeam.y > ball.y) aiTeam.y -= aiTeam.speed;
+        } else {
+            if (aiTeam.x < canvas.width / 2) aiTeam.x += aiTeam.speed * 0.5;
+            if (aiTeam.x > canvas.width / 2) aiTeam.x -= aiTeam.speed * 0.5;
+            if (aiTeam.y > 150) aiTeam.y -= aiTeam.speed * 0.5;
+        }
+
+        // Rebonds bords
+        if (ball.x - ball.radius < 20) { ball.x = 20 + ball.radius; ball.vx *= -0.9; }
+        if (ball.x + ball.radius > canvas.width - 20) { ball.x = canvas.width - 20 - ball.radius; ball.vx *= -0.9; }
+
+        // Buts
+        if (ball.y < 25) {
+            if (ball.x > canvas.width / 2 - 50 && ball.x < canvas.width / 2 + 50) {
+                scoreTeam2++;
+                triggerConfetti();
+                resetBall();
+                return;
+            } else {
+                ball.y = 25;
+                ball.vy *= -0.9;
+            }
+        }
+
+        if (ball.y > canvas.height - 25) {
+            if (ball.x > canvas.width / 2 - 50 && ball.x < canvas.width / 2 + 50) {
+                scoreTeam1++;
+                triggerConfetti();
+                resetBall();
+                return;
+            } else {
+                ball.y = canvas.height - 25;
+                ball.vy *= -0.9;
+            }
+        }
+
+        checkCollision(aiTeam);
+        checkCollision(playerTeam);
+    }
+
+    function checkCollision(entity) {
+        const dx = ball.x - entity.x;
+        const dy = ball.y - entity.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = ball.radius + entity.radius;
+
+        if (dist < minDist) {
+            const angle = Math.atan2(dy, dx);
+            const hitSpeed = (entity.isDragging ? 7 : 4) * gameSettings.ballBaseSpeed;
+            ball.vx = Math.cos(angle) * (hitSpeed + Math.abs(ball.vx) * 0.5);
+            ball.vy = Math.sin(angle) * (hitSpeed + Math.abs(ball.vy) * 0.5);
+            
+            ball.x = entity.x + Math.cos(angle) * minDist;
+            ball.y = entity.y + Math.sin(angle) * minDist;
+        }
+    }
+
+    function gameLoop() {
+        if (matchRunning) {
+            update();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawField();
+            drawUI();
+            drawTeamBadge(aiTeam.x, aiTeam.y, aiTeam.radius, teams[aiTeamIndex]);
+            drawTeamBadge(playerTeam.x, playerTeam.y, playerTeam.radius, teams[selectedTeamIndex]);
+            drawBall(ball.x, ball.y, ball.radius);
+
+            if (goalAnimationTimer > 0) {
+                confetti.forEach(c => {
+                    c.x += c.vx; c.y += c.vy;
+                    ctx.fillStyle = c.color;
+                    ctx.fillRect(c.x, c.y, c.size, c.size * 0.6);
+                });
+                ctx.fillStyle = '#ffd700';
+                ctx.font = 'bold 48px "Courier New"';
+                ctx.textAlign = 'center';
+                ctx.fillText("¡GOOAL!", canvas.width / 2, canvas.height / 2);
+            }
+        }
+        requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+</script>
+
+</body>
+</html>
