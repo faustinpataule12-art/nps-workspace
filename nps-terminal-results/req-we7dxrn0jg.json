@@ -1,0 +1,1 @@
+{"success":true,"exit_code":0,"output":"Utilisation de Gradio Client...\nLoaded as API: https://facebook-musicgen.hf.space\nRESULT_FAIL:The upstream Gradio app has raised an exception but has not enabled verbose error reporting. To enable, set show_error=True in launch().\nTentative de telechargement direct ou autre methode...\n"}
