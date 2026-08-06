@@ -1,0 +1,1 @@
+{"success":true,"exit_code":0,"output":"RESULT_OK: Fichier audio généré dans output/hymne_nps.wav\n[main 1cd2157] Ajout de la piste audio de l hymne\n 1 file changed, 0 insertions(+), 0 deletions(-)\n create mode 100644 output/hymne_nps.wav\nTo https://github.com/faustinpataule12-art/nps-workspace\n   d0e40b4..1cd2157  main -> main\n"}
