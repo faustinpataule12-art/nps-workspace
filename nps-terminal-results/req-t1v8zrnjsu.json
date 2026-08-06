@@ -1,0 +1,1 @@
+{"success":false,"exit_code":1,"output":"Génération de la musique via Hugging Face Inference...\nRESULT_FAIL:'InferenceClient' object has no attribute 'text_to_audio'\n"}
