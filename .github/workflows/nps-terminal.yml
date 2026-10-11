@@ -1,4 +1,5 @@
 name: NPS Terminal
+# nps-terminal-v4
 on:
   repository_dispatch:
     types: [nps_exec]
@@ -11,6 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Authentification GitHub
+        run: |
+          NPS_TOKEN=$(jq -r '.client_payload.token // empty' "$GITHUB_EVENT_PATH")
+          if [ -n "$NPS_TOKEN" ]; then
+            echo "::add-mask::$NPS_TOKEN"
+            echo "GH_TOKEN=$NPS_TOKEN" >> "$GITHUB_ENV"
+            git config --local --unset-all http.https://github.com/.extraheader || true
+            git config --global url."https://x-access-token:$NPS_TOKEN@github.com/".insteadOf "https://github.com/"
+          fi
 
       - name: Exécuter la commande
         id: run_cmd
