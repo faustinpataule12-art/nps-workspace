@@ -1,5 +1,6 @@
 name: NPS Terminal
-# nps-terminal-v4
+# nps-terminal-v5
+run-name: NPS ${{ github.event.client_payload.request_id }}
 on:
   repository_dispatch:
     types: [nps_exec]
@@ -29,9 +30,11 @@ jobs:
         env:
           NPS_COMMAND: ${{ github.event.client_payload.command }}
         run: |
+          set +e
           echo "$NPS_COMMAND" > /tmp/nps_cmd.sh
           bash /tmp/nps_cmd.sh > /tmp/nps_output.txt 2>&1
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          exit 0
 
       - name: Écrire le résultat
         env:
@@ -70,5 +73,8 @@ jobs:
           git config user.email "nps-bot@users.noreply.github.com"
           git add -A
           git commit -m "Exécution terminal NPS et fichiers: ${{ github.event.client_payload.request_id }}" || echo "Rien à committer"
-          git pull --rebase
-          git push
+          for i in 1 2 3 4 5; do
+            git pull --rebase && git push && exit 0
+            sleep $((i * 3))
+          done
+          exit 1
