@@ -1,5 +1,5 @@
 name: NPS Terminal
-# nps-terminal-v5
+# nps-terminal-v6
 run-name: NPS ${{ github.event.client_payload.request_id }}
 on:
   repository_dispatch:
@@ -42,30 +42,30 @@ jobs:
           EXIT_CODE: ${{ steps.run_cmd.outputs.exit_code }}
         run: |
           mkdir -p nps-terminal-results
-          node -e "
-            const fs=require('fs');
-            const cp=require('child_process');
-            const output=fs.readFileSync('/tmp/nps_output.txt','utf8').slice(0,50000);
-            let createdFiles = [];
-            try {
-              const status = cp.execSync('git status --porcelain', { encoding: 'utf8' });
-              const lines = status.split('
-').filter(Boolean);
-              for (const line of lines) {
-                const p = line.slice(3).trim().replace(/^"|"$/g, '');
-                if (!p) continue;
-                const name = p.split('/').pop().toLowerCase();
-                if (name === 'readme.md' || name.startsWith('.git') || name.startsWith('nps-terminal-results') || name === 'node_modules' || name.endsWith('.part') || name.endsWith('.ytdl') || name.endsWith('.tmp')) continue;
-                try {
-                  if (fs.existsSync(p) && fs.statSync(p).isFile() && fs.statSync(p).size > 0) {
-                    createdFiles.push(p);
-                  }
-                } catch(e) {}
-              }
-            } catch(e) {}
-            const data={success: process.env.EXIT_CODE==='0', exit_code: Number(process.env.EXIT_CODE||1), output, createdFiles};
-            fs.writeFileSync('nps-terminal-results/' + process.env.REQ_ID + '.json', JSON.stringify(data));
-          "
+          cat > /tmp/nps_write.js <<'NPSJS'
+          const fs = require('fs');
+          const cp = require('child_process');
+          const NUL = String.fromCharCode(0);
+          let output = '';
+          try { output = fs.readFileSync('/tmp/nps_output.txt', 'utf8').slice(0, 50000); } catch (e) {}
+          const createdFiles = [];
+          try {
+            const listing = cp.execSync('git -c core.quotepath=false ls-files -m -o --exclude-standard -z', { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+            for (const p of listing.split(NUL)) {
+              if (!p) continue;
+              const name = p.split('/').pop().toLowerCase();
+              if (name === 'readme.md' || name.startsWith('.git') || p.startsWith('nps-terminal-results') || p.startsWith('node_modules/') || name.endsWith('.part') || name.endsWith('.ytdl') || name.endsWith('.tmp')) continue;
+              try {
+                const st = fs.statSync(p);
+                if (st.isFile() && st.size > 0) createdFiles.push(p);
+              } catch (e) {}
+            }
+          } catch (e) {}
+          const code = process.env.EXIT_CODE === undefined || process.env.EXIT_CODE === '' ? 1 : Number(process.env.EXIT_CODE);
+          const data = { success: code === 0, exit_code: code, output: output, createdFiles: createdFiles };
+          fs.writeFileSync('nps-terminal-results/' + process.env.REQ_ID + '.json', JSON.stringify(data));
+          NPSJS
+          node /tmp/nps_write.js
 
       - name: Commit et push le résultat
         run: |
