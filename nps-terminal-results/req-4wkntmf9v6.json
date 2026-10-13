@@ -1,0 +1,1 @@
+{"success":false,"exit_code":2,"output":"/tmp/nps_cmd.sh: line 2: syntax error near unexpected token `)'\n/tmp/nps_cmd.sh: line 2: `'.join(re.findall(r'<meta property=\"og:video[^>]*content=\"([^\"]+)\"', html))) or print('Aucune balise og:video trouvée')\"'\n","createdFiles":[]}
