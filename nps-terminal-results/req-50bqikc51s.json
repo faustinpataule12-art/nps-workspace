@@ -1,0 +1,1 @@
+{"success":false,"exit_code":100,"output":"Reading package lists...\nE: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)\nE: Unable to lock directory /var/lib/apt/lists/\n","createdFiles":[]}
