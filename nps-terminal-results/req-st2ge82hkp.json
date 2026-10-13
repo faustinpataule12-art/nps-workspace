@@ -1,0 +1,1 @@
+{"success":true,"exit_code":0,"output":"Cloning into 'memory_repo'...\n[main e7f7228] Add exported video\n 2 files changed, 0 insertions(+), 0 deletions(-)\n create mode 100644 exports/bonne_video.mp4\n create mode 100644 uploads/bonne_video.mp4\nTo https://github.com/faustinpataule12-art/nps-memory.git\n   d0fa059..e7f7228  main -> main\n","createdFiles":[]}
